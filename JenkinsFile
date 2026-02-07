@@ -1,50 +1,63 @@
 pipeline {
-    agent any
+  agent any
 
-    environment {
-        NODE_VERSION = 'node24' // match your Node version
+  tools {
+    nodejs 'node24'
+  }
+
+  environment {
+    BUN_INSTALL = "%USERPROFILE%\\.bun"
+    PATH = "%USERPROFILE%\\.bun\\bin;%PATH%"
+  }
+
+  stages {
+
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
     }
 
-    stages {
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/Tanay-277/continuum'
-            }
-        }
-
-        stage('Setup Node') {
-            steps {
-                // If NodeJS plugin is installed
-                nodejs(NODE_VERSION) {
-                    sh 'node -v'
-                    sh 'npm -v'
-                }
-            }
-        }
-
-        stage('Install Dependencies') {
-            steps {
-                sh 'bun install' // or `bun install` if using Bun
-            }
-        }
-
-        stage('Build') {
-            steps {
-                sh 'bun run build' // or `bun build`
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                // Example: copy build to server
-                sh 'rsync -av build/ user@server:/var/www/myapp'
-            }
-        }   
+    stage('Verify Node') {
+      steps {
+        bat '''
+          node -v
+          npm -v
+        '''
+      }
     }
 
-    post {
-        always {
-            archiveArtifacts artifacts: 'build/**', allowEmptyArchive: true
-        }
+    stage('Install Bun') {
+      steps {
+        bat '''
+          where bun >nul 2>nul
+          if %ERRORLEVEL% NEQ 0 (
+            powershell -Command "irm https://bun.sh/install.ps1 | iex"
+          )
+          bun -v
+        '''
+      }
     }
+
+    stage('Install Dependencies') {
+      steps {
+        bat 'bun install'
+      }
+    }
+
+    stage('Build Next.js App') {
+      steps {
+        bat 'bun run build'
+      }
+    }
+  }
+
+  post {
+    success {
+      echo '✅ Windows + Node 24 + Bun + Next.js build successful'
+    }
+    failure {
+      echo '❌ Build failed'
+    }
+  }
 }
