@@ -50,6 +50,25 @@ pipeline {
         bat 'bun run build'
       }
     }
+    stage('Deploy with PM2') {
+  steps {
+    bat '''
+      :: Stop existing PM2 process
+      pm2 stop continuum || echo "No existing PM2 process"
+      pm2 delete continuum || echo "No existing PM2 process"
+
+      :: Start Next.js app with PM2
+      pm2 start node_modules\\.bin\\next.cmd --name continuum -- start -p 3000
+      pm2 save
+    '''
+  }
+}
+stage('Reload Nginx') {
+  steps {
+    bat 'nginx -s reload'
+  }
+}
+
   }
 
   post {
