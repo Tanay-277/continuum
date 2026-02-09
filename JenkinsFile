@@ -65,7 +65,7 @@ pipeline {
 }
 stage('Reload Nginx') {
   steps {
-    bat 'nginx -s reload'
+        bat '"C:\\nginx\\nginx.exe" -p "C:\\nginx" -s reload'
   }
 }
 
