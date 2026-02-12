@@ -1,0 +1,12 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+      "outDir": "./dist-tests",
+      "module": "CommonJS",
+      "moduleResolution": "Node",
+      "noEmit": false,           // important to allow JS output for tests
+      "jsx": "react-jsx"         // ensure JSX works in .tsx files
+    },
+    "include": ["tests/**/*.ts", "tests/**/*.tsx"]
+  }
+  

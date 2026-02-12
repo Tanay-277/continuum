@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { QueryProvider } from "@/providers/query-provider";
-import { ThemeProvider } from "@/providers/theme-provider";
+import {Host_Grotesk} from "next/font/google"
+
 import "./globals.css";
 
-// Load local fonts
-const inter = localFont({
-	src: "./fonts/InterVariable.woff2",
+import { ThemeProvider } from "@/providers/theme-provider";
+
+const nohemi = localFont({
+  src: "./fonts/InterVariable.woff2",
 	variable: "--font-sans",
 	display: "swap",
 });
@@ -15,6 +16,7 @@ const geistMono = localFont({
 	src: "./fonts/GeistMono.woff2",
 	variable: "--font-geist-mono",
 	display: "swap",
+  style:""
 });
 
 export const metadata: Metadata = {
@@ -28,18 +30,16 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en" className={inter.variable} suppressHydrationWarning>
-			<body className={`${inter.variable} ${geistMono.variable} antialiased`}>
-				<QueryProvider>
-					<ThemeProvider
-						attribute="class"
-						defaultTheme="system"
-						enableSystem
-						disableTransitionOnChange
-					>
-						{children}
-					</ThemeProvider>
-				</QueryProvider>
+		<html lang="en" className={nohemi.variable} suppressHydrationWarning>
+			<body className={`${nohemi.variable} ${geistMono.variable} antialiased`}>
+				<ThemeProvider
+					attribute="class"
+					defaultTheme="system"
+					enableSystem
+					disableTransitionOnChange
+				>
+					{children}
+				</ThemeProvider>
 			</body>
 		</html>
 	);

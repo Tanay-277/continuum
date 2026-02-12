@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "tsconfig.test.json"  ],
   "exclude": ["node_modules"]
 }

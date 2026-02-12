@@ -5,14 +5,13 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start -p 3000",
-    "lint": "eslint"
+    "start": "next start",
+    "lint": "eslint",
+    "test:e2e": "tsc -p tsconfig.test.json && node dist-tests/home.test.js"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
-    "@tanstack/react-query": "^5.90.16",
-    "@tanstack/react-query-devtools": "^5.91.2",
-    "axios": "^1.13.2",
+    "chromedriver": "144",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.562.0",
@@ -20,20 +19,22 @@
     "next-themes": "^0.4.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "selenium-webdriver": "^4.40.0",
     "shadcn": "^3.6.2",
     "tailwind-merge": "^3.4.0",
     "tw-animate-css": "^1.4.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@tanstack/eslint-plugin-query": "^5.91.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/selenium-webdriver": "^4.35.5",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   },
   "ignoreScripts": [
     "sharp",
