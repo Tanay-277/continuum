@@ -97,7 +97,10 @@ function CardExample() {
         </CardHeader>
         <CardFooter>
           <AlertDialog>
-            <AlertDialogTrigger render={<Button />}>
+            <AlertDialogTrigger render={<Button />}
+              data-testid="show-dialog-btn"
+
+            >
               <PlusIcon data-icon="inline-start" />
               Show Dialog
             </AlertDialogTrigger>
@@ -114,8 +117,8 @@ function CardExample() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Don&apos;t allow</AlertDialogCancel>
-                <AlertDialogAction>Allow</AlertDialogAction>
+                <AlertDialogCancel data-testid="dialog-cancel">Don&apos;t allow</AlertDialogCancel>
+                <AlertDialogAction data-testid="dialog-allow">Allow</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -160,6 +163,7 @@ function FormExample() {
           <CardAction>
             <DropdownMenu>
               <DropdownMenuTrigger
+                data-testid="menu-trigger"
                 render={<Button variant="ghost" size="icon" />}
               >
                 <MoreVerticalIcon
@@ -436,13 +440,14 @@ function FormExample() {
                   <Input
                     id="small-form-name"
                     placeholder="Enter your name"
+                    data-testid="name-input"
                     required
                   />
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="small-form-role">Role</FieldLabel>
                   <Select items={roleItems} defaultValue={null}>
-                    <SelectTrigger id="small-form-role">
+                    <SelectTrigger id="small-form-role" >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -464,6 +469,8 @@ function FormExample() {
                 <Combobox items={frameworks}>
                   <ComboboxInput
                     id="small-form-framework"
+                    data-testid="framework-input"
+
                     placeholder="Select a framework"
                     required
                   />
@@ -487,7 +494,7 @@ function FormExample() {
                 />
               </Field>
               <Field orientation="horizontal">
-                <Button type="submit">Submit</Button>
+                <Button type="submit" data-testid="submit-btn">Submit</Button>
                 <Button variant="outline" type="button">
                   Cancel
                 </Button>
