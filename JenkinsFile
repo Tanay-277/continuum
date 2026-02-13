@@ -61,14 +61,15 @@ pipeline {
                 bat 'bun run build'
             }
         }
-
-   stage('Start App For Testing') {
+stage('Start App For Testing') {
   steps {
     bat '''
-      pm2 start node_modules\\.bin\\next.cmd --name continuum-test -- start -p %TEST_PORT% --update-env || exit /b 1
+      REM Start temporary Next.js app for E2E tests using Node
+      pm2 start node "node_modules/next/dist/bin/next" --name continuum-test -- start -p %TEST_PORT% --update-env || exit /b 1
     '''
   }
 }
+
 
 
 
@@ -87,13 +88,14 @@ pipeline {
             }
         }
 
-        stage('Stop Test App') {
+    stage('Stop Test App') {
   steps {
     bat '''
       pm2 delete continuum-test >nul 2>nul || exit /b 0
     '''
   }
 }
+
 
 
         stage('Deploy Production App') {
