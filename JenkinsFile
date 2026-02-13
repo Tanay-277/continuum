@@ -77,7 +77,7 @@ pm2 start "bun" --name continuum-test -- run start -- --port %TEST_PORT% --updat
   steps {
     bat '''
       REM Wait 10 seconds for app to start
-      ping 127.0.0.1 -n 11 >nul
+node -e "setTimeout(() => {}, 10000)"
     '''
   }
 }
