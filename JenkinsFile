@@ -1,115 +1,141 @@
 pipeline {
-  agent any
+    agent any
 
-  tools {
-    nodejs 'node24'
-  }
-
-  environment {
-    BUN_INSTALL = "%USERPROFILE%\\.bun"
-    PATH = "%USERPROFILE%\\.bun\\bin;%PATH%"
-    TEST_PORT = "3001"
-    PM2_HOME = "C:\\pm2home"
-  }
-
-  stages {
-
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
+    // Only needed if NodeJS Plugin installed. Otherwise remove this block.
+    tools {
+        nodejs 'node24'
     }
 
-    stage('Verify Node') {
-      steps {
-        bat '''
-          node -v
-          npm -v
-        '''
-      }
+    environment {
+        // Bun
+        BUN_INSTALL = "%USERPROFILE%\\.bun"
+        PATH = "%USERPROFILE%\\.bun\\bin;%PATH%"
+
+        // Test app
+        TEST_PORT = "3001"
+
+        // PM2 home directory (required for Windows service Jenkins)
+        PM2_HOME = "C:\\pm2home"
+
+        // Production app port
+        PROD_PORT = "3000"
     }
 
-    stage('Install Bun') {
-      steps {
-        bat '''
-          where bun >nul 2>nul
-          if %ERRORLEVEL% NEQ 0 (
-            powershell -Command "irm https://bun.sh/install.ps1 | iex"
-          )
-          bun -v
-        '''
-      }
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Verify Node') {
+            steps {
+                bat '''
+                    node -v
+                    npm -v
+                '''
+            }
+        }
+
+        stage('Install Bun') {
+            steps {
+                bat '''
+                    where bun >nul 2>nul
+                    if %ERRORLEVEL% NEQ 0 (
+                        powershell -Command "irm https://bun.sh/install.ps1 | iex"
+                    )
+                    bun -v
+                '''
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                bat 'bun install'
+            }
+        }
+
+        stage('Build Next.js App') {
+            steps {
+                bat 'bun run build'
+            }
+        }
+
+        stage('Start App For Testing') {
+            steps {
+                bat '''
+                    REM Safe delete previous test process
+                    pm2 delete continuum-test >nul 2>nul || echo "No existing test process"
+
+                    REM Start Next.js temporary test app
+                    pm2 start node_modules\\.bin\\next.cmd --name continuum-test -- start -p %TEST_PORT% || exit /b 1
+                '''
+            }
+        }
+
+        stage('Wait For App') {
+            steps {
+                bat 'timeout /t 10'
+            }
+        }
+
+        stage('Run E2E Tests') {
+            steps {
+                bat '''
+                    set BASE_URL=http://localhost:%TEST_PORT%
+                    bun run test:e2e || exit /b 1
+                '''
+            }
+        }
+
+        stage('Stop Test App') {
+            steps {
+                bat '''
+                    REM Always safe stop/delete for test app
+                    pm2 stop continuum-test >nul 2>nul || echo "No process"
+                    pm2 delete continuum-test >nul 2>nul || echo "No process"
+                    exit /b 0
+                '''
+            }
+        }
+
+        stage('Deploy Production App') {
+            steps {
+                bat '''
+                    REM Stop & delete existing production app safely
+                    pm2 stop continuum >nul 2>nul || echo "No existing production process"
+                    pm2 delete continuum >nul 2>nul || echo "No existing production process"
+
+                    REM Start production app on PROD_PORT
+                    pm2 start node_modules\\.bin\\next.cmd --name continuum -- start -p %PROD_PORT%
+                    pm2 save
+                '''
+            }
+        }
+
+        stage('Reload Nginx') {
+            steps {
+                bat '"C:\\nginx\\nginx.exe" -p "C:\\nginx" -s reload'
+            }
+        }
     }
 
-    stage('Install Dependencies') {
-      steps {
-        bat 'bun install'
-      }
-    }
+    post {
+        always {
+            bat '''
+                REM Cleanup temp test app in case something failed
+                pm2 stop continuum-test >nul 2>nul || echo "No test process"
+                pm2 delete continuum-test >nul 2>nul || echo "No test process"
+            '''
+        }
 
-    stage('Build Next.js App') {
-      steps {
-        bat 'bun run build'
-      }
-    }
+        success {
+            echo '✅ CI/CD Pipeline Successful: Build + E2E + Deploy'
+        }
 
-    stage('Start App For Testing') {
-      steps {
-        bat '''
-          pm2 delete continuum-test >nul 2>nul
-          pm2 start node_modules\\.bin\\next.cmd --name continuum-test -- start -p %TEST_PORT%
-        '''
-      }
+        failure {
+            echo '❌ CI/CD Pipeline Failed'
+        }
     }
-
-    stage('Wait for App') {
-      steps {
-        bat 'timeout /t 10'
-      }
-    }
-
-    stage('Run E2E Tests') {
-      steps {
-        bat '''
-          set BASE_URL=http://localhost:%TEST_PORT%
-          bun run test:e2e
-        '''
-      }
-    }
-
-    stage('Stop Test App') {
-      steps {
-        bat '''
-          pm2 delete continuum-test >nul 2>nul
-          exit /b 0
-        '''
-      }
-    }
-
-    stage('Deploy with PM2') {
-      steps {
-        bat '''
-          pm2 delete continuum >nul 2>nul
-          pm2 start node_modules\\.bin\\next.cmd --name continuum -- start -p 3000
-          pm2 save
-        '''
-      }
-    }
-
-    stage('Reload Nginx') {
-      steps {
-        bat '"C:\\nginx\\nginx.exe" -p "C:\\nginx" -s reload'
-      }
-    }
-
-  }
-
-  post {
-    success {
-      echo '✅ Build + E2E + Deploy successful'
-    }
-    failure {
-      echo '❌ Build failed'
-    }
-  }
 }
