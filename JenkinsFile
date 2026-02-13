@@ -65,7 +65,7 @@ stage('Start App For Testing') {
   steps {
     bat '''
       REM Start temporary Next.js app for E2E tests using Node
-      pm2 start node "node_modules/next/dist/bin/next" --name continuum-test -- start -p %TEST_PORT% --update-env || exit /b 1
+pm2 start "bun" --name continuum-test -- run start -- --port %TEST_PORT% --update-env
     '''
   }
 }
