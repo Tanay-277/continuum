@@ -46,10 +46,47 @@ pipeline {
     }
 
     stage('Build Next.js App') {
-      steps {
-        bat 'bun run build'
-      }
-    }
+  steps {
+    bat 'bun run build'
+  }
+}
+
+stage('Start App For Testing') {
+  steps {
+    bat '''
+      pm2 stop continuum-test || echo "No existing test process"
+      pm2 delete continuum-test || echo "No existing test process"
+      pm2 start node_modules\\.bin\\next.cmd --name continuum-test -- start -p 3001
+    '''
+  }
+}
+
+stage('Wait for App') {
+  steps {
+    bat '''
+      timeout /t 10
+    '''
+  }
+}
+
+stage('Run E2E Tests') {
+  steps {
+    bat '''
+      set BASE_URL=http://localhost:3001
+      bun run test:e2e
+    '''
+  }
+}
+
+stage('Stop Test App') {
+  steps {
+    bat '''
+      pm2 stop continuum-test
+      pm2 delete continuum-test
+    '''
+  }
+}
+
     stage('Deploy with PM2') {
   steps {
     bat '''
