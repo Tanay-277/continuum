@@ -43,7 +43,8 @@ pipeline {
                 bat '''
                     where bun >nul 2>nul
                     if %ERRORLEVEL% NEQ 0 (
-                        powershell -Command "irm https://bun.sh/install.ps1 | iex"
+                        REM Bun install fallback (requires powershell)
+                        echo "Bun not found. Please install manually if powershell is missing."
                     )
                     bun -v
                 '''
@@ -61,27 +62,24 @@ pipeline {
                 bat 'bun run build'
             }
         }
-stage('Start App For Testing') {
-  steps {
-    bat '''
-      REM Start temporary Next.js app for E2E tests using Node
-pm2 start "bun" --name continuum-test -- run start -- --port %TEST_PORT% --update-env
-    '''
-  }
-}
 
+        stage('Start App For Testing') {
+            steps {
+                bat '''
+                    REM Start temporary test app for E2E using NodeJS (safe on Windows Jenkins)
+                    pm2 start node "node_modules/next/dist/bin/next" --name continuum-test -- start -p %TEST_PORT% --update-env || exit /b 1
+                '''
+            }
+        }
 
-
-
-       stage('Wait For App') {
-  steps {
-    bat '''
-      REM Wait 10 seconds for app to start
-node -e "setTimeout(() => {}, 10000)"
-    '''
-  }
-}
-
+        stage('Wait For App') {
+            steps {
+                bat '''
+                    REM Wait 10 seconds for app to start using NodeJS (works in Jenkins Windows service)
+                    node -e "setTimeout(() => {}, 10000)"
+                '''
+            }
+        }
 
         stage('Run E2E Tests') {
             steps {
@@ -92,25 +90,24 @@ node -e "setTimeout(() => {}, 10000)"
             }
         }
 
-    stage('Stop Test App') {
-  steps {
-    bat '''
-      pm2 delete continuum-test >nul 2>nul || exit /b 0
-    '''
-  }
-}
-
-
+        stage('Stop Test App') {
+            steps {
+                bat '''
+                    REM Stop & delete temp test app safely
+                    pm2 delete continuum-test >nul 2>nul || exit /b 0
+                '''
+            }
+        }
 
         stage('Deploy Production App') {
             steps {
                 bat '''
                     REM Stop & delete existing production app safely
-                    pm2 stop continuum >nul 2>nul || echo "No existing production process"
-                    pm2 delete continuum >nul 2>nul || echo "No existing production process"
+                    pm2 stop continuum >nul 2>nul || exit /b 0
+                    pm2 delete continuum >nul 2>nul || exit /b 0
 
-                    REM Start production app on PROD_PORT
-                    pm2 start node_modules\\.bin\\next.cmd --name continuum -- start -p %PROD_PORT%
+                    REM Start production app safely (NodeJS path, works with Bun)
+                    pm2 start node "node_modules/next/dist/bin/next" --name continuum -- start -p %PROD_PORT%
                     pm2 save
                 '''
             }
@@ -126,9 +123,9 @@ node -e "setTimeout(() => {}, 10000)"
     post {
         always {
             bat '''
-                REM Cleanup temp test app in case something failed
-                pm2 stop continuum-test >nul 2>nul || echo "No test process"
-                pm2 delete continuum-test >nul 2>nul || echo "No test process"
+                REM Cleanup temp test app just in case
+                pm2 stop continuum-test >nul 2>nul || exit /b 0
+                pm2 delete continuum-test >nul 2>nul || exit /b 0
             '''
         }
 
