@@ -73,11 +73,15 @@ pm2 start "bun" --name continuum-test -- run start -- --port %TEST_PORT% --updat
 
 
 
-        stage('Wait For App') {
-            steps {
-                bat 'timeout /t 10'
-            }
-        }
+       stage('Wait For App') {
+  steps {
+    bat '''
+      REM Wait 10 seconds for app to start
+      ping 127.0.0.1 -n 11 >nul
+    '''
+  }
+}
+
 
         stage('Run E2E Tests') {
             steps {
