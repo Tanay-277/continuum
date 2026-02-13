@@ -8,6 +8,8 @@ pipeline {
   environment {
     BUN_INSTALL = "%USERPROFILE%\\.bun"
     PATH = "%USERPROFILE%\\.bun\\bin;%PATH%"
+    TEST_PORT = "3001"
+    PM2_HOME = "C:\\pm2home"
   }
 
   stages {
@@ -46,71 +48,65 @@ pipeline {
     }
 
     stage('Build Next.js App') {
-  steps {
-    bat 'bun run build'
-  }
-}
+      steps {
+        bat 'bun run build'
+      }
+    }
 
-stage('Start App For Testing') {
-  steps {
-    bat '''
-      pm2 stop continuum-test || echo "No existing test process"
-      pm2 delete continuum-test || echo "No existing test process"
-      pm2 start node_modules\\.bin\\next.cmd --name continuum-test -- start -p 3001
-    '''
-  }
-}
+    stage('Start App For Testing') {
+      steps {
+        bat '''
+          pm2 delete continuum-test >nul 2>nul
+          pm2 start node_modules\\.bin\\next.cmd --name continuum-test -- start -p %TEST_PORT%
+        '''
+      }
+    }
 
-stage('Wait for App') {
-  steps {
-    bat '''
-      timeout /t 10
-    '''
-  }
-}
+    stage('Wait for App') {
+      steps {
+        bat 'timeout /t 10'
+      }
+    }
 
-stage('Run E2E Tests') {
-  steps {
-    bat '''
-      set BASE_URL=http://localhost:3001
-      bun run test:e2e
-    '''
-  }
-}
+    stage('Run E2E Tests') {
+      steps {
+        bat '''
+          set BASE_URL=http://localhost:%TEST_PORT%
+          bun run test:e2e
+        '''
+      }
+    }
 
-stage('Stop Test App') {
-  steps {
-    bat '''
-      pm2 stop continuum-test
-      pm2 delete continuum-test
-    '''
-  }
-}
+    stage('Stop Test App') {
+      steps {
+        bat '''
+          pm2 delete continuum-test >nul 2>nul
+          exit /b 0
+        '''
+      }
+    }
 
     stage('Deploy with PM2') {
-  steps {
-    bat '''
-      :: Stop existing PM2 process
-      pm2 stop continuum || echo "No existing PM2 process"
-      pm2 delete continuum || echo "No existing PM2 process"
+      steps {
+        bat '''
+          pm2 delete continuum >nul 2>nul
+          pm2 start node_modules\\.bin\\next.cmd --name continuum -- start -p 3000
+          pm2 save
+        '''
+      }
+    }
 
-      :: Start Next.js app with PM2
-      pm2 start node_modules\\.bin\\next.cmd --name continuum -- start -p 3000
-      pm2 save
-    '''
-  }
-}
-stage('Reload Nginx') {
-  steps {
+    stage('Reload Nginx') {
+      steps {
         bat '"C:\\nginx\\nginx.exe" -p "C:\\nginx" -s reload'
-  }
-}
+      }
+    }
 
   }
 
   post {
     success {
-      echo '✅ Windows + Node 24 + Bun + Next.js build successful'
+      echo '✅ Build + E2E + Deploy successful'
     }
     failure {
       echo '❌ Build failed'
