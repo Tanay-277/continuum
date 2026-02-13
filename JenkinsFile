@@ -62,14 +62,14 @@ pipeline {
             }
         }
 
-       stage('Start App For Testing') {
+   stage('Start App For Testing') {
   steps {
     bat '''
-      REM Start temporary Next.js app for E2E tests
       pm2 start node_modules\\.bin\\next.cmd --name continuum-test -- start -p %TEST_PORT% --update-env || exit /b 1
     '''
   }
 }
+
 
 
         stage('Wait For App') {
