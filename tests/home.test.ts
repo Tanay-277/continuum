@@ -19,10 +19,8 @@ async function createDriver() {
   const driver = await createDriver();
 
   try {
-    // Go to your Next.js app
     await driver.get("http://localhost:3000/");
 
-    // --- WAIT FOR HYDRATION ---
     await driver.wait(
       until.elementLocated(By.css('[data-testid="name-input"]')),
       10000,

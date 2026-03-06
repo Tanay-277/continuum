@@ -1,23 +1,17 @@
 pipeline {
     agent any
 
-    // Only needed if NodeJS Plugin installed. Otherwise remove this block.
+    // Optional, used for host-side E2E test runner.
     tools {
         nodejs 'node24'
     }
 
     environment {
-        // Bun
-        BUN_INSTALL = "%USERPROFILE%\\.bun"
-        PATH = "%USERPROFILE%\\.bun\\bin;%PATH%"
-
-        // Test app
+        IMAGE_NAME = "continuum"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        TEST_CONTAINER = "continuum-test"
+        PROD_CONTAINER = "continuum-app"
         TEST_PORT = "3001"
-
-        // PM2 home directory (required for Windows service Jenkins)
-        PM2_HOME = "C:\\pm2home"
-
-        // Production app port
         PROD_PORT = "3000"
     }
 
@@ -38,45 +32,53 @@ pipeline {
             }
         }
 
-        stage('Install Bun') {
+        stage('Verify Docker') {
             steps {
                 bat '''
-                    where bun >nul 2>nul
-                    if %ERRORLEVEL% NEQ 0 (
-                        REM Bun install fallback (requires powershell)
-                        echo "Bun not found. Please install manually if powershell is missing."
-                    )
-                    bun -v
+                    docker --version
+                    docker compose version
                 '''
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                bat 'bun install'
+                bat 'npm ci'
             }
         }
 
-        stage('Build Next.js App') {
-            steps {
-                bat 'bun run build'
-            }
-        }
-
-        stage('Start App For Testing') {
+        stage('Validate Runtime Env') {
             steps {
                 bat '''
-                    REM Start temporary test app for E2E using NodeJS (safe on Windows Jenkins)
-                    pm2 start node "node_modules/next/dist/bin/next" --name continuum-test -- start -p %TEST_PORT% --update-env || exit /b 1
+                    if not exist .env.local (
+                        echo ".env.local not found in workspace. Provide runtime secrets before deploy."
+                        exit /b 1
+                    )
                 '''
             }
         }
 
-        stage('Wait For App') {
+        stage('Build Docker Image') {
             steps {
                 bat '''
-                    REM Wait 10 seconds for app to start using NodeJS (works in Jenkins Windows service)
-                    node -e "setTimeout(() => {}, 10000)"
+                    docker build -f Dockerfile -t %IMAGE_NAME%:%IMAGE_TAG% -t %IMAGE_NAME%:latest .
+                '''
+            }
+        }
+
+        stage('Start Test Container') {
+            steps {
+                bat '''
+                    docker rm -f %TEST_CONTAINER% >nul 2>nul
+                    docker run -d --name %TEST_CONTAINER% --env-file .env.local -e NODE_ENV=production -p %TEST_PORT%:3000 %IMAGE_NAME%:%IMAGE_TAG% || exit /b 1
+                '''
+            }
+        }
+
+        stage('Wait For Test App') {
+            steps {
+                bat '''
+                    powershell -NoProfile -ExecutionPolicy Bypass -Command "for ($i=0; $i -lt 30; $i++) { try { $r = Invoke-WebRequest -Uri 'http://localhost:%TEST_PORT%' -UseBasicParsing -TimeoutSec 2; if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 500) { Write-Host 'App is reachable'; exit 0 } } catch {}; Start-Sleep -Seconds 2 }; Write-Error 'Test app did not become ready in time'; exit 1"
                 '''
             }
         }
@@ -85,37 +87,37 @@ pipeline {
             steps {
                 bat '''
                     set BASE_URL=http://localhost:%TEST_PORT%
-                    bun run test:e2e || exit /b 1
+                    npm run test:e2e || exit /b 1
                 '''
             }
         }
 
-        stage('Stop Test App') {
+        stage('Stop Test Container') {
             steps {
                 bat '''
-                    REM Stop & delete temp test app safely
-                    pm2 delete continuum-test >nul 2>nul || exit /b 0
+                    docker rm -f %TEST_CONTAINER% >nul 2>nul
                 '''
             }
         }
 
-        stage('Deploy Production App') {
+        stage('Deploy Production Container') {
             steps {
                 bat '''
-                    REM Stop & delete existing production app safely
-                    pm2 stop continuum >nul 2>nul || exit /b 0
-                    pm2 delete continuum >nul 2>nul || exit /b 0
-
-                    REM Start production app safely (NodeJS path, works with Bun)
-                    pm2 start node "node_modules/next/dist/bin/next" --name continuum -- start -p %PROD_PORT%
-                    pm2 save
+                    docker rm -f %PROD_CONTAINER% >nul 2>nul
+                    docker run -d --name %PROD_CONTAINER% --restart unless-stopped --env-file .env.local -e NODE_ENV=production -p %PROD_PORT%:3000 %IMAGE_NAME%:%IMAGE_TAG% || exit /b 1
                 '''
             }
         }
 
         stage('Reload Nginx') {
             steps {
-                bat '"C:\\nginx\\nginx.exe" -p "C:\\nginx" -s reload'
+                bat '''
+                    if exist "C:\\nginx\\nginx.exe" (
+                        "C:\\nginx\\nginx.exe" -p "C:\\nginx" -s reload
+                    ) else (
+                        echo "Nginx not found on agent. Skipping reload."
+                    )
+                '''
             }
         }
     }
@@ -123,18 +125,20 @@ pipeline {
     post {
         always {
             bat '''
-                REM Cleanup temp test app just in case
-                pm2 stop continuum-test >nul 2>nul || exit /b 0
-                pm2 delete continuum-test >nul 2>nul || exit /b 0
+                docker rm -f %TEST_CONTAINER% >nul 2>nul
             '''
         }
 
         success {
-            echo '✅ CI/CD Pipeline Successful: Build + E2E + Deploy'
+            echo 'CI/CD Pipeline Successful: Docker Build + E2E + Deploy'
         }
 
         failure {
-            echo '❌ CI/CD Pipeline Failed'
+            bat '''
+                docker logs %TEST_CONTAINER% >nul 2>nul && docker logs %TEST_CONTAINER%
+                docker logs %PROD_CONTAINER% >nul 2>nul && docker logs %PROD_CONTAINER%
+            '''
+            echo 'CI/CD Pipeline Failed'
         }
     }
 }

@@ -59,7 +59,7 @@ export const  rawgClient: AxiosInstance = axios.create({
 // RAWG request interceptor to add API key
 rawgClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const apiKey = process.env.NEXT_PUBLIC_RAWG_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_RAWG_API_KEY || process.env.RAWG_API_KEY;
 
     if (!apiKey) {
       console.error("[RAWG API] API KEY MISSING");
