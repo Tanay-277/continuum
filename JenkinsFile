@@ -28,25 +28,52 @@ pipeline {
 
         stage('Generate Runtime Env') {
             steps {
-                withCredentials([
-                    string(credentialsId: 'continuum-rawg-api-key', variable: 'RAWG_API_KEY'),
-                    string(credentialsId: 'continuum-client-id', variable: 'CLIENT_ID'),
-                    string(credentialsId: 'continuum-client-secret', variable: 'CLIENT_SECRET'),
-                    string(credentialsId: 'continuum-access-token', variable: 'ACCESS_TOKEN')
-                ]) {
-                    bat '''
-                        echo Creating .env.local
+                script {
+                    def generatedFromCredentials = false
 
-                        echo NEXT_PUBLIC_RAWG_API_KEY=%RAWG_API_KEY%> .env.local
-                        echo CLIENT_ID=%CLIENT_ID%>> .env.local
-                        echo CLIENT_SECRET=%CLIENT_SECRET%>> .env.local
-                        echo ACCESS_TOKEN=%ACCESS_TOKEN%>> .env.local
-                        echo NEXT_PUBLIC_API_URL=%NEXT_PUBLIC_API_URL%>> .env.local
-                        echo NODE_ENV=production>> .env.local
+                    try {
+                        withCredentials([
+                            string(credentialsId: 'continuum-rawg-api-key', variable: 'RAWG_API_KEY'),
+                            string(credentialsId: 'continuum-client-id', variable: 'CLIENT_ID'),
+                            string(credentialsId: 'continuum-client-secret', variable: 'CLIENT_SECRET'),
+                            string(credentialsId: 'continuum-access-token', variable: 'ACCESS_TOKEN')
+                        ]) {
+                            bat '''
+                                echo Creating .env.local from Jenkins Credentials
 
-                        echo .env.local created
-                        type .env.local
-                    '''
+                                echo NEXT_PUBLIC_RAWG_API_KEY=%RAWG_API_KEY%> .env.local
+                                echo CLIENT_ID=%CLIENT_ID%>> .env.local
+                                echo CLIENT_SECRET=%CLIENT_SECRET%>> .env.local
+                                echo ACCESS_TOKEN=%ACCESS_TOKEN%>> .env.local
+                                echo NEXT_PUBLIC_API_URL=%NEXT_PUBLIC_API_URL%>> .env.local
+                                echo NODE_ENV=production>> .env.local
+
+                                echo .env.local created from Jenkins Credentials
+                            '''
+                            generatedFromCredentials = true
+                        }
+                    } catch (Exception ex) {
+                        echo "Credentials not available or not configured: ${ex.getMessage()}"
+                    }
+
+                    if (!generatedFromCredentials) {
+                        bat '''
+                            if not exist .env.local (
+                                echo ERROR: Missing Jenkins credentials and .env.local file.
+                                echo Create Jenkins credentials or provide .env.local in the workspace.
+                                exit /b 1
+                            )
+
+                            findstr /R /C:"^NEXT_PUBLIC_RAWG_API_KEY=$" /C:"^RAWG_API_KEY=$" /C:"^CLIENT_ID=$" /C:"^CLIENT_SECRET=$" /C:"^ACCESS_TOKEN=$" .env.local >nul
+                            if %ERRORLEVEL% EQU 0 (
+                                echo ERROR: .env.local has empty required values.
+                                echo Fill NEXT_PUBLIC_RAWG_API_KEY (or RAWG_API_KEY), CLIENT_ID, CLIENT_SECRET, ACCESS_TOKEN.
+                                exit /b 1
+                            )
+
+                            echo Using existing .env.local from workspace
+                        '''
+                    }
                 }
             }
         }
