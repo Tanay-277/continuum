@@ -26,26 +26,6 @@ pipeline {
             }
         }
 
-        stage('Verify Tools') {
-            steps {
-                bat '''
-                    echo Checking Node
-                    node -v
-                    npm -v
-
-                    echo Checking Docker
-                    docker --version
-                    docker compose version
-                '''
-            }
-        }
-
-        stage('Install Dependencies') {
-            steps {
-                bat 'npm ci'
-            }
-        }
-
         stage('Generate Runtime Env') {
             steps {
                 withCredentials([
@@ -55,7 +35,7 @@ pipeline {
                     string(credentialsId: 'continuum-access-token', variable: 'ACCESS_TOKEN')
                 ]) {
                     bat '''
-                        echo Generating .env.local
+                        echo Creating .env.local
 
                         echo NEXT_PUBLIC_RAWG_API_KEY=%RAWG_API_KEY%> .env.local
                         echo CLIENT_ID=%CLIENT_ID%>> .env.local
@@ -64,7 +44,7 @@ pipeline {
                         echo NEXT_PUBLIC_API_URL=%NEXT_PUBLIC_API_URL%>> .env.local
                         echo NODE_ENV=production>> .env.local
 
-                        echo .env.local generated
+                        echo .env.local created
                         type .env.local
                     '''
                 }
@@ -83,12 +63,16 @@ pipeline {
             }
         }
 
+        stage('Install Dependencies') {
+            steps {
+                bat 'npm ci'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 bat '''
-                    docker build -f Dockerfile ^
-                    -t %IMAGE_NAME%:%IMAGE_TAG% ^
-                    -t %IMAGE_NAME%:latest .
+                    docker build -t %IMAGE_NAME%:%IMAGE_TAG% -t %IMAGE_NAME%:latest .
                 '''
             }
         }
@@ -101,27 +85,16 @@ pipeline {
                     docker run -d ^
                     --name %TEST_CONTAINER% ^
                     --env-file .env.local ^
-                    -e NODE_ENV=production ^
                     -p %TEST_PORT%:3000 ^
                     %IMAGE_NAME%:%IMAGE_TAG%
                 '''
             }
         }
 
-        stage('Wait For Test App') {
+        stage('Wait For App') {
             steps {
                 bat '''
-                    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-                    "for ($i=0; $i -lt 30; $i++) { ^
-                        try { ^
-                            $r = Invoke-WebRequest -Uri 'http://localhost:%TEST_PORT%' -UseBasicParsing -TimeoutSec 2; ^
-                            if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 500) { ^
-                                Write-Host 'App Ready'; exit 0 ^
-                            } ^
-                        } catch {}; ^
-                        Start-Sleep -Seconds 2 ^
-                    }; ^
-                    Write-Error 'App failed to start'; exit 1"
+                    powershell -Command "for ($i=0; $i -lt 30; $i++) { try { $r = Invoke-WebRequest http://localhost:%TEST_PORT% -UseBasicParsing; if ($r.StatusCode -gt 0) { exit 0 } } catch {}; Start-Sleep 2 }; exit 1"
                 '''
             }
         }
@@ -152,7 +125,6 @@ pipeline {
                     --name %PROD_CONTAINER% ^
                     --restart unless-stopped ^
                     --env-file .env.local ^
-                    -e NODE_ENV=production ^
                     -p %PROD_PORT%:3000 ^
                     %IMAGE_NAME%:%IMAGE_TAG%
                 '''
@@ -163,10 +135,9 @@ pipeline {
             steps {
                 bat '''
                     if exist "C:\\nginx\\nginx.exe" (
-                        echo Reloading Nginx
                         "C:\\nginx\\nginx.exe" -p "C:\\nginx" -s reload
                     ) else (
-                        echo Nginx not installed, skipping reload
+                        echo Nginx not installed
                     )
                 '''
             }
@@ -174,25 +145,19 @@ pipeline {
     }
 
     post {
-
         always {
-            bat '''
-                docker rm -f %TEST_CONTAINER% >nul 2>nul
-            '''
+            bat 'docker rm -f %TEST_CONTAINER% >nul 2>nul'
         }
 
         success {
-            echo "CI/CD SUCCESS - Build, Test, Deploy completed"
+            echo "CI/CD SUCCESS"
         }
 
         failure {
             bat '''
-                echo Showing container logs
-
                 docker logs %TEST_CONTAINER% >nul 2>nul && docker logs %TEST_CONTAINER%
                 docker logs %PROD_CONTAINER% >nul 2>nul && docker logs %PROD_CONTAINER%
             '''
-            echo "CI/CD FAILED"
         }
     }
 }
