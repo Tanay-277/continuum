@@ -9,6 +9,11 @@ pipeline {
     environment {
         IMAGE_NAME = "continuum"
         IMAGE_TAG = "${BUILD_NUMBER}"
+        RAWG_API_KEY = credentials('continuum-rawg-api-key')
+        CLIENT_ID = credentials('continuum-client-id')
+        CLIENT_SECRET = credentials('continuum-client-secret')
+        ACCESS_TOKEN = credentials('continuum-access-token')
+        NEXT_PUBLIC_API_URL = "http://localhost:3000"
         TEST_CONTAINER = "continuum-test"
         PROD_CONTAINER = "continuum-app"
         TEST_PORT = "3001"
@@ -47,13 +52,20 @@ pipeline {
             }
         }
 
-        stage('Validate Runtime Env') {
+        stage('Generate Runtime Env') {
             steps {
                 bat '''
-                    if not exist .env.local (
-                        echo ".env.local not found in workspace. Provide runtime secrets before deploy."
-                        exit /b 1
-                    )
+                    REM Generate .env.local from Jenkins Credentials
+                    (
+                        echo NEXT_PUBLIC_RAWG_API_KEY=%RAWG_API_KEY%
+                        echo CLIENT_ID=%CLIENT_ID%
+                        echo CLIENT_SECRET=%CLIENT_SECRET%
+                        echo ACCESS_TOKEN=%ACCESS_TOKEN%
+                        echo NEXT_PUBLIC_API_URL=%NEXT_PUBLIC_API_URL%
+                        echo NODE_ENV=production
+                    ) > .env.local
+                    
+                    echo Generated .env.local from Jenkins Credentials
                 '''
             }
         }
