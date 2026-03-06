@@ -1,7 +1,6 @@
 pipeline {
     agent any
 
-    // Optional, used for host-side E2E test runner.
     tools {
         nodejs 'node24'
     }
@@ -9,15 +8,14 @@ pipeline {
     environment {
         IMAGE_NAME = "continuum"
         IMAGE_TAG = "${BUILD_NUMBER}"
-        RAWG_API_KEY = credentials('continuum-rawg-api-key')
-        CLIENT_ID = credentials('continuum-client-id')
-        CLIENT_SECRET = credentials('continuum-client-secret')
-        ACCESS_TOKEN = credentials('continuum-access-token')
-        NEXT_PUBLIC_API_URL = "http://localhost:3000"
+
         TEST_CONTAINER = "continuum-test"
         PROD_CONTAINER = "continuum-app"
+
         TEST_PORT = "3001"
         PROD_PORT = "3000"
+
+        NEXT_PUBLIC_API_URL = "http://localhost:3000"
     }
 
     stages {
@@ -28,18 +26,14 @@ pipeline {
             }
         }
 
-        stage('Verify Node') {
+        stage('Verify Tools') {
             steps {
                 bat '''
+                    echo Checking Node
                     node -v
                     npm -v
-                '''
-            }
-        }
 
-        stage('Verify Docker') {
-            steps {
-                bat '''
+                    echo Checking Docker
                     docker --version
                     docker compose version
                 '''
@@ -54,18 +48,37 @@ pipeline {
 
         stage('Generate Runtime Env') {
             steps {
+                withCredentials([
+                    string(credentialsId: 'continuum-rawg-api-key', variable: 'RAWG_API_KEY'),
+                    string(credentialsId: 'continuum-client-id', variable: 'CLIENT_ID'),
+                    string(credentialsId: 'continuum-client-secret', variable: 'CLIENT_SECRET'),
+                    string(credentialsId: 'continuum-access-token', variable: 'ACCESS_TOKEN')
+                ]) {
+                    bat '''
+                        echo Generating .env.local
+
+                        echo NEXT_PUBLIC_RAWG_API_KEY=%RAWG_API_KEY%> .env.local
+                        echo CLIENT_ID=%CLIENT_ID%>> .env.local
+                        echo CLIENT_SECRET=%CLIENT_SECRET%>> .env.local
+                        echo ACCESS_TOKEN=%ACCESS_TOKEN%>> .env.local
+                        echo NEXT_PUBLIC_API_URL=%NEXT_PUBLIC_API_URL%>> .env.local
+                        echo NODE_ENV=production>> .env.local
+
+                        echo .env.local generated
+                        type .env.local
+                    '''
+                }
+            }
+        }
+
+        stage('Verify Env File') {
+            steps {
                 bat '''
-                    REM Generate .env.local from Jenkins Credentials
-                    (
-                        echo NEXT_PUBLIC_RAWG_API_KEY=%RAWG_API_KEY%
-                        echo CLIENT_ID=%CLIENT_ID%
-                        echo CLIENT_SECRET=%CLIENT_SECRET%
-                        echo ACCESS_TOKEN=%ACCESS_TOKEN%
-                        echo NEXT_PUBLIC_API_URL=%NEXT_PUBLIC_API_URL%
-                        echo NODE_ENV=production
-                    ) > .env.local
-                    
-                    echo Generated .env.local from Jenkins Credentials
+                    if not exist .env.local (
+                        echo ERROR: .env.local not found
+                        exit /b 1
+                    )
+                    echo .env.local verified
                 '''
             }
         }
@@ -73,7 +86,9 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 bat '''
-                    docker build -f Dockerfile -t %IMAGE_NAME%:%IMAGE_TAG% -t %IMAGE_NAME%:latest .
+                    docker build -f Dockerfile ^
+                    -t %IMAGE_NAME%:%IMAGE_TAG% ^
+                    -t %IMAGE_NAME%:latest .
                 '''
             }
         }
@@ -82,7 +97,13 @@ pipeline {
             steps {
                 bat '''
                     docker rm -f %TEST_CONTAINER% >nul 2>nul
-                    docker run -d --name %TEST_CONTAINER% --env-file .env.local -e NODE_ENV=production -p %TEST_PORT%:3000 %IMAGE_NAME%:%IMAGE_TAG% || exit /b 1
+
+                    docker run -d ^
+                    --name %TEST_CONTAINER% ^
+                    --env-file .env.local ^
+                    -e NODE_ENV=production ^
+                    -p %TEST_PORT%:3000 ^
+                    %IMAGE_NAME%:%IMAGE_TAG%
                 '''
             }
         }
@@ -90,7 +111,17 @@ pipeline {
         stage('Wait For Test App') {
             steps {
                 bat '''
-                    powershell -NoProfile -ExecutionPolicy Bypass -Command "for ($i=0; $i -lt 30; $i++) { try { $r = Invoke-WebRequest -Uri 'http://localhost:%TEST_PORT%' -UseBasicParsing -TimeoutSec 2; if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 500) { Write-Host 'App is reachable'; exit 0 } } catch {}; Start-Sleep -Seconds 2 }; Write-Error 'Test app did not become ready in time'; exit 1"
+                    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+                    "for ($i=0; $i -lt 30; $i++) { ^
+                        try { ^
+                            $r = Invoke-WebRequest -Uri 'http://localhost:%TEST_PORT%' -UseBasicParsing -TimeoutSec 2; ^
+                            if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 500) { ^
+                                Write-Host 'App Ready'; exit 0 ^
+                            } ^
+                        } catch {}; ^
+                        Start-Sleep -Seconds 2 ^
+                    }; ^
+                    Write-Error 'App failed to start'; exit 1"
                 '''
             }
         }
@@ -99,7 +130,7 @@ pipeline {
             steps {
                 bat '''
                     set BASE_URL=http://localhost:%TEST_PORT%
-                    npm run test:e2e || exit /b 1
+                    npm run test:e2e
                 '''
             }
         }
@@ -112,11 +143,18 @@ pipeline {
             }
         }
 
-        stage('Deploy Production Container') {
+        stage('Deploy Production') {
             steps {
                 bat '''
                     docker rm -f %PROD_CONTAINER% >nul 2>nul
-                    docker run -d --name %PROD_CONTAINER% --restart unless-stopped --env-file .env.local -e NODE_ENV=production -p %PROD_PORT%:3000 %IMAGE_NAME%:%IMAGE_TAG% || exit /b 1
+
+                    docker run -d ^
+                    --name %PROD_CONTAINER% ^
+                    --restart unless-stopped ^
+                    --env-file .env.local ^
+                    -e NODE_ENV=production ^
+                    -p %PROD_PORT%:3000 ^
+                    %IMAGE_NAME%:%IMAGE_TAG%
                 '''
             }
         }
@@ -125,9 +163,10 @@ pipeline {
             steps {
                 bat '''
                     if exist "C:\\nginx\\nginx.exe" (
+                        echo Reloading Nginx
                         "C:\\nginx\\nginx.exe" -p "C:\\nginx" -s reload
                     ) else (
-                        echo "Nginx not found on agent. Skipping reload."
+                        echo Nginx not installed, skipping reload
                     )
                 '''
             }
@@ -135,6 +174,7 @@ pipeline {
     }
 
     post {
+
         always {
             bat '''
                 docker rm -f %TEST_CONTAINER% >nul 2>nul
@@ -142,15 +182,17 @@ pipeline {
         }
 
         success {
-            echo 'CI/CD Pipeline Successful: Docker Build + E2E + Deploy'
+            echo "CI/CD SUCCESS - Build, Test, Deploy completed"
         }
 
         failure {
             bat '''
+                echo Showing container logs
+
                 docker logs %TEST_CONTAINER% >nul 2>nul && docker logs %TEST_CONTAINER%
                 docker logs %PROD_CONTAINER% >nul 2>nul && docker logs %PROD_CONTAINER%
             '''
-            echo 'CI/CD Pipeline Failed'
+            echo "CI/CD FAILED"
         }
     }
 }

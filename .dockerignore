@@ -10,8 +10,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 .env
-.env.local
-.env.*.local
+.env.production
 
 Dockerfile*
 docker-compose*.yml
