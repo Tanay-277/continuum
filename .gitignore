@@ -2,10 +2,12 @@ node_modules
 .next
 dist-tests
 coverage
+tsconfig.tsbuildinfo
 
 .env
 .env.local
 .env.production
+.env.ci.generated
 
 npm-debug.log*
 yarn-debug.log*
@@ -16,3 +18,7 @@ pnpm-debug.log*
 !README.md
 *.md
 /lib/generated/prisma
+
+# Ansible local secret helpers
+ansible/.vault_pass.txt
+ansible/*.retry

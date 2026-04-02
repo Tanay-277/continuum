@@ -1,3 +1,11 @@
+def runCommand(String unixCommand, String windowsCommand = null) {
+    if (isUnix()) {
+        sh unixCommand
+    } else {
+        bat(windowsCommand ?: unixCommand)
+    }
+}
+
 pipeline {
     agent any
 
@@ -5,112 +13,266 @@ pipeline {
         nodejs 'node24'
     }
 
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '25'))
+        disableConcurrentBuilds()
+        timestamps()
+        timeout(time: 60, unit: 'MINUTES')
+    }
+
+    parameters {
+        choice(name: 'DEPLOY_TARGET', choices: ['local-docker', 'ansible'], description: 'Deployment strategy after validation')
+        booleanParam(name: 'RUN_AUTH_E2E', defaultValue: true, description: 'Run auth E2E flow against candidate container')
+        booleanParam(name: 'PUSH_IMAGE', defaultValue: false, description: 'Push deployment image to a registry')
+        string(name: 'REGISTRY_IMAGE', defaultValue: '', description: 'Registry image reference, e.g. ghcr.io/org/continuum:latest')
+        string(name: 'PROD_BASE_URL', defaultValue: 'http://localhost:3000', description: 'Public base URL for final smoke tests')
+    }
+
     environment {
-        IMAGE_NAME = "continuum"
+        IMAGE_NAME = 'continuum'
         IMAGE_TAG = "${BUILD_NUMBER}"
+        DEPLOY_IMAGE = ''
 
-        TEST_CONTAINER = "continuum-test"
-        PROD_CONTAINER = "continuum-app"
+        TEST_CONTAINER = 'continuum-candidate'
+        PROD_CONTAINER = 'continuum-app'
 
-        TEST_PORT = "3001"
-        PROD_PORT = "3000"
+        TEST_PORT = '3001'
+        PROD_PORT = '3000'
+        RUNTIME_ENV_FILE = '.env.ci.generated'
     }
 
     stages {
-
         stage('Checkout Code') {
             steps {
                 checkout scm
             }
         }
 
+        stage('Resolve Deployment Image') {
+            steps {
+                script {
+                    env.DEPLOY_IMAGE = params.REGISTRY_IMAGE?.trim()
+                        ? params.REGISTRY_IMAGE.trim()
+                        : "${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+
+                    echo "Deployment image set to: ${env.DEPLOY_IMAGE}"
+                }
+            }
+        }
+
+        stage('Validate Toolchain') {
+            steps {
+                script {
+                    runCommand(
+                        'node --version && npm --version && docker --version',
+                        '@echo off\r\nnode --version\r\nnpm --version\r\ndocker --version'
+                    )
+                }
+            }
+        }
+
         stage('Install Dependencies') {
             steps {
-                bat 'npm ci'
+                script {
+                    runCommand('npm ci')
+                }
+            }
+        }
+
+        stage('Static Quality Gates') {
+            steps {
+                script {
+                    runCommand('npm run lint')
+                    runCommand('npm run typecheck')
+                    runCommand('npm run build')
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                bat "docker build -t %IMAGE_NAME%:%IMAGE_TAG% ."
+                script {
+                    runCommand("docker build --target runner -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} -t ${env.IMAGE_NAME}:latest .")
+
+                    if (env.DEPLOY_IMAGE != "${env.IMAGE_NAME}:${env.IMAGE_TAG}") {
+                        runCommand("docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.DEPLOY_IMAGE}")
+                    }
+                }
             }
         }
 
-        stage('Run Test Container') {
+        stage('Push Docker Image') {
+            when {
+                expression { return params.PUSH_IMAGE }
+            }
             steps {
-                bat '''
-                docker rm -f %TEST_CONTAINER% >nul 2>nul
+                script {
+                    if (!params.REGISTRY_IMAGE?.trim()) {
+                        error('PUSH_IMAGE is enabled, but REGISTRY_IMAGE is empty.')
+                    }
 
-                docker run -d ^
-                --name %TEST_CONTAINER% ^
-                -p %TEST_PORT%:3000 ^
-                %IMAGE_NAME%:%IMAGE_TAG%
-                '''
+                    def registryHost = env.DEPLOY_IMAGE.tokenize('/')[0]
+                    if (!registryHost.contains('.') && !registryHost.contains(':')) {
+                        error('REGISTRY_IMAGE must include a registry host (example: ghcr.io/org/continuum:latest).')
+                    }
+
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'continuum-docker-registry',
+                            usernameVariable: 'REGISTRY_USERNAME',
+                            passwordVariable: 'REGISTRY_PASSWORD'
+                        )
+                    ]) {
+                        if (isUnix()) {
+                            sh "echo \"$REGISTRY_PASSWORD\" | docker login ${registryHost} --username \"$REGISTRY_USERNAME\" --password-stdin"
+                            sh "docker push ${env.DEPLOY_IMAGE}"
+                        } else {
+                            bat "@echo off\r\necho %REGISTRY_PASSWORD%| docker login ${registryHost} --username %REGISTRY_USERNAME% --password-stdin\r\ndocker push ${env.DEPLOY_IMAGE}"
+                        }
+                    }
+                }
             }
         }
 
-        stage('Wait For App') {
+        stage('Generate Runtime Environment') {
             steps {
-                bat '''
-                powershell -Command "Start-Sleep -Seconds 10"
-                '''
+                withCredentials([
+                    string(credentialsId: 'continuum-nextauth-secret', variable: 'NEXTAUTH_SECRET'),
+                    string(credentialsId: 'continuum-nextauth-url', variable: 'NEXTAUTH_URL'),
+                    string(credentialsId: 'continuum-rawg-api-key', variable: 'RAWG_API_KEY'),
+                    string(credentialsId: 'continuum-client-id', variable: 'CLIENT_ID'),
+                    string(credentialsId: 'continuum-client-secret', variable: 'CLIENT_SECRET')
+                ]) {
+                    script {
+                        def accessToken = env.ACCESS_TOKEN ?: ''
+
+                        writeFile(
+                            file: env.RUNTIME_ENV_FILE,
+                            text: """NODE_ENV=production
+PORT=3000
+DATABASE_URL=file:/data/continuum.db
+NEXTAUTH_URL=${NEXTAUTH_URL}
+NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+NEXT_PUBLIC_API_URL=${NEXTAUTH_URL}
+NEXT_PUBLIC_RAWG_API_KEY=${RAWG_API_KEY}
+RAWG_API_KEY=${RAWG_API_KEY}
+CLIENT_ID=${CLIENT_ID}
+CLIENT_SECRET=${CLIENT_SECRET}
+ACCESS_TOKEN=${accessToken}
+"""
+                        )
+                    }
+                }
             }
         }
 
-        stage('Run E2E Tests') {
+        stage('Start Candidate Container') {
             steps {
-                bat '''
-                set BASE_URL=http://localhost:%TEST_PORT%
-                npm run test:e2e
-                '''
+                script {
+                    runCommand(
+                        "docker rm -f ${env.TEST_CONTAINER} >/dev/null 2>&1 || true\n" +
+                        "docker run -d --name ${env.TEST_CONTAINER} --env-file ${env.RUNTIME_ENV_FILE} -p ${env.TEST_PORT}:3000 ${env.IMAGE_NAME}:${env.IMAGE_TAG}",
+                        "@echo off\r\ndocker rm -f ${env.TEST_CONTAINER} >nul 2>nul\r\ndocker run -d --name ${env.TEST_CONTAINER} --env-file ${env.RUNTIME_ENV_FILE} -p ${env.TEST_PORT}:3000 ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                    )
+                }
             }
         }
 
-        stage('Stop Test Container') {
+        stage('Wait For Candidate Health') {
             steps {
-                bat 'docker rm -f %TEST_CONTAINER%'
+                script {
+                    runCommand("node scripts/wait-for-url.mjs http://localhost:${env.TEST_PORT}/api/health 120 2")
+                }
             }
         }
 
-        stage('Deploy Production Container') {
+        stage('Candidate Smoke Tests') {
             steps {
-                bat '''
-                docker rm -f %PROD_CONTAINER% >nul 2>nul
+                script {
+                    withEnv(["BASE_URL=http://localhost:${env.TEST_PORT}"]) {
+                        runCommand('npm run test:smoke')
 
-                docker run -d ^
-                --name %PROD_CONTAINER% ^
-                -p %PROD_PORT%:3000 ^
-                %IMAGE_NAME%:%IMAGE_TAG%
-                '''
+                        if (params.RUN_AUTH_E2E) {
+                            runCommand('npm run test:auth-e2e')
+                        }
+                    }
+                }
             }
         }
 
-        stage('Reload Nginx') {
+        stage('Deploy To Local Docker') {
+            when {
+                expression { return params.DEPLOY_TARGET == 'local-docker' }
+            }
             steps {
-                bat '''
-                if exist "C:\\nginx\\nginx.exe" (
-                    "C:\\nginx\\nginx.exe" -p "C:\\nginx" -s reload
-                ) else (
-                    echo Nginx not installed
-                )
-                '''
+                script {
+                    runCommand(
+                        "docker rm -f ${env.PROD_CONTAINER} >/dev/null 2>&1 || true\n" +
+                        "docker run -d --name ${env.PROD_CONTAINER} --restart unless-stopped --env-file ${env.RUNTIME_ENV_FILE} -v continuum-data:/data -p ${env.PROD_PORT}:3000 ${env.DEPLOY_IMAGE}",
+                        "@echo off\r\ndocker rm -f ${env.PROD_CONTAINER} >nul 2>nul\r\ndocker run -d --name ${env.PROD_CONTAINER} --restart unless-stopped --env-file ${env.RUNTIME_ENV_FILE} -v continuum-data:/data -p ${env.PROD_PORT}:3000 ${env.DEPLOY_IMAGE}"
+                    )
+                }
+            }
+        }
+
+        stage('Deploy With Ansible') {
+            when {
+                expression { return params.DEPLOY_TARGET == 'ansible' }
+            }
+            steps {
+                script {
+                    if (!isUnix()) {
+                        error('Ansible deployment requires a Linux Jenkins agent with ansible-playbook installed.')
+                    }
+
+                    runCommand('ansible-playbook --version')
+                    runCommand(
+                        "ansible-playbook -i ansible/inventories/production/hosts.ini ansible/playbooks/deploy.yml " +
+                        "--extra-vars \"continuum_image=${env.DEPLOY_IMAGE} continuum_public_port=${env.PROD_PORT} continuum_env_source_file=${env.WORKSPACE}/${env.RUNTIME_ENV_FILE}\""
+                    )
+                }
+            }
+        }
+
+        stage('Post-Deploy Smoke Tests') {
+            steps {
+                script {
+                    def prodBaseUrl = params.PROD_BASE_URL?.trim()
+                    if (!prodBaseUrl) {
+                        error('PROD_BASE_URL cannot be empty.')
+                    }
+
+                    runCommand("node scripts/wait-for-url.mjs ${prodBaseUrl}/api/health 120 2")
+                    withEnv(["BASE_URL=${prodBaseUrl}"]) {
+                        runCommand('npm run test:smoke')
+                    }
+                }
             }
         }
     }
 
     post {
-
         always {
-            bat 'docker rm -f %TEST_CONTAINER% >nul 2>nul'
+            script {
+                runCommand(
+                    "docker rm -f ${env.TEST_CONTAINER} >/dev/null 2>&1 || true",
+                    "@echo off\r\ndocker rm -f ${env.TEST_CONTAINER} >nul 2>nul"
+                )
+
+                if (isUnix()) {
+                    sh "rm -f ${env.RUNTIME_ENV_FILE}"
+                } else {
+                    bat "@echo off\r\nif exist ${env.RUNTIME_ENV_FILE} del /q ${env.RUNTIME_ENV_FILE}"
+                }
+            }
         }
 
         success {
-            echo "Pipeline completed successfully"
+            echo 'Pipeline completed successfully. Candidate validated and deployment smoke tests passed.'
         }
 
         failure {
-            echo "Pipeline failed"
+            echo 'Pipeline failed. Check stage logs, container logs, and smoke test output.'
         }
-
     }
 }

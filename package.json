@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:e2e": "tsc -p tsconfig.test.json && node dist-tests/home.test.js"
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "tsc -p tsconfig.test.json && node dist-tests/home.test.js",
+    "test:auth-e2e": "node scripts/e2e-auth-flow-check.mjs",
+    "test:smoke": "node scripts/release-smoke-check.mjs",
+    "ci:verify": "npm run lint && npm run typecheck && npm run build"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, UseQueryOptions, UseMutationOptions } from "@tanstack/react-query";
 import { rawgService, igdbService, twitchService } from "@/lib/api-service";
-import type { RAWGGamesResponse, IGDBGamesResponse } from "@/lib/types";
+import type { RAWGGamesResponse, IGDBGamesResponse, Game } from "@/lib/types";
 
 /**
  * Hook to fetch games from RAWG API
@@ -29,9 +29,9 @@ export function useRAWGGames(
  */
 export function useRAWGGame(
   id: number,
-  options?: Omit<UseQueryOptions<any, Error>, "queryKey" | "queryFn">
+  options?: Omit<UseQueryOptions<Game, Error>, "queryKey" | "queryFn">
 ) {
-  return useQuery<any, Error>({
+  return useQuery<Game, Error>({
     queryKey: ["rawg-game", id],
     queryFn: () => rawgService.getGameById(id),
     enabled: !!id,

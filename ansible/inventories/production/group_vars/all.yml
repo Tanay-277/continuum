@@ -1,0 +1,6 @@
+---
+# Non-secret deployment defaults. Override secrets via Ansible Vault or CI vars.
+continuum_app_dir: /opt/continuum
+continuum_public_port: 3000
+continuum_image: ghcr.io/your-org/continuum:latest
+continuum_healthcheck_url: "http://127.0.0.1:{{ continuum_public_port }}/api/health"

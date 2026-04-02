@@ -6,10 +6,23 @@ export interface Game {
   slug: string;
   released: string;
   rating: number;
+  ratings_count?: number;
+  metacritic?: number;
+  playtime?: number;
   background_image?: string;
   platforms?: Platform[];
   genres?: Genre[];
   esrb_rating?: ESRBRating;
+  developers?: Array<{ id?: number | string; name: string }>;
+  publishers?: Array<{ id?: number | string; name: string }>;
+  tags?: Array<{ id?: number | string; name: string }>;
+  stores?: Array<{ store?: { name?: string } }>;
+  ratings?: Array<{ title?: string; count?: number; percent?: number }>;
+  description_raw?: string;
+  short_screenshots?: Array<{ id?: number | string; image: string }>;
+  website?: string;
+  reddit_url?: string;
+  metacritic_url?: string;
 }
 
 export interface Platform {

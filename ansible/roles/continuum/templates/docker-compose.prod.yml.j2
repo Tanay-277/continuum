@@ -1,0 +1,21 @@
+services:
+  {{ continuum_service_name }}:
+    container_name: {{ continuum_container_name }}
+    image: {{ continuum_image }}
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    ports:
+      - "{{ continuum_public_port }}:{{ continuum_internal_port }}"
+    volumes:
+      - "{{ continuum_volume_name }}:/data"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:{{ continuum_internal_port }}/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  {{ continuum_volume_name }}:
+    name: {{ continuum_volume_name }}

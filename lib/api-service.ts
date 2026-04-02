@@ -1,5 +1,5 @@
 import { apiClient, rawgClient } from "./axios";
-import type { RAWGGamesResponse, IGDBGamesResponse } from "./types";
+import type { RAWGGamesResponse, IGDBGamesResponse, Game } from "./types";
 
 /**
  * RAWG API Service
@@ -45,8 +45,8 @@ export const rawgService = {
   /**
    * Fetch a single game by ID
    */
-  getGameById: async (id: number): Promise<any> => {
-    const response = await rawgClient.get(`/games/${id}`);
+  getGameById: async (id: number): Promise<Game> => {
+    const response = await rawgClient.get<Game>(`/games/${id}`);
     return response.data;
   },
 

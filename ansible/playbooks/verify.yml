@@ -1,0 +1,17 @@
+---
+- name: Verify Continuum Deployment
+  hosts: continuum_prod
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Check health endpoint
+      ansible.builtin.uri:
+        url: "{{ continuum_healthcheck_url }}"
+        method: GET
+        status_code: 200
+        return_content: true
+      register: continuum_health
+
+    - name: Print health payload
+      ansible.builtin.debug:
+        var: continuum_health.json

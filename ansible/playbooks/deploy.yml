@@ -1,0 +1,7 @@
+---
+- name: Deploy Continuum
+  hosts: continuum_prod
+  become: true
+  gather_facts: false
+  roles:
+    - continuum

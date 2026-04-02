@@ -1,0 +1,24 @@
+---
+continuum_app_dir: /opt/continuum
+continuum_container_name: continuum-app
+continuum_service_name: continuum
+continuum_image: continuum:latest
+continuum_public_port: 3000
+continuum_internal_port: 3000
+continuum_volume_name: continuum-data
+
+# If provided (for CI pipelines), this source file is copied to remote host.
+continuum_env_source_file: ""
+
+# Template fallback values (used when continuum_env_source_file is empty).
+continuum_database_url: file:/data/continuum.db
+continuum_nextauth_url: https://continuum.example.com
+continuum_nextauth_secret: replace-me
+continuum_rawg_api_key: ""
+continuum_client_id: ""
+continuum_client_secret: ""
+continuum_access_token: ""
+
+continuum_healthcheck_retries: 25
+continuum_healthcheck_delay: 3
+continuum_healthcheck_url: "http://127.0.0.1:{{ continuum_public_port }}/api/health"

@@ -1,0 +1,63 @@
+---
+- name: Validate required deployment variables
+  ansible.builtin.assert:
+    that:
+      - continuum_image is defined
+      - continuum_image | length > 0
+      - continuum_app_dir is defined
+      - continuum_public_port is defined
+
+- name: Verify docker CLI is installed
+  ansible.builtin.command: docker --version
+  changed_when: false
+
+- name: Verify docker compose plugin is installed
+  ansible.builtin.command: docker compose version
+  changed_when: false
+
+- name: Ensure application directory exists
+  ansible.builtin.file:
+    path: "{{ continuum_app_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Render production compose file
+  ansible.builtin.template:
+    src: docker-compose.prod.yml.j2
+    dest: "{{ continuum_app_dir }}/docker-compose.prod.yml"
+    mode: "0644"
+
+- name: Upload generated env file from CI workspace
+  ansible.builtin.copy:
+    src: "{{ continuum_env_source_file }}"
+    dest: "{{ continuum_app_dir }}/.env.production"
+    mode: "0600"
+  when: continuum_env_source_file is defined and continuum_env_source_file | length > 0
+
+- name: Render env file from Ansible variables
+  ansible.builtin.template:
+    src: env.production.j2
+    dest: "{{ continuum_app_dir }}/.env.production"
+    mode: "0600"
+  when: continuum_env_source_file is not defined or continuum_env_source_file | length == 0
+
+- name: Pull deployment image
+  ansible.builtin.command: docker compose --file docker-compose.prod.yml --env-file .env.production pull
+  args:
+    chdir: "{{ continuum_app_dir }}"
+
+- name: Start or update service
+  ansible.builtin.command: docker compose --file docker-compose.prod.yml --env-file .env.production up -d --remove-orphans
+  args:
+    chdir: "{{ continuum_app_dir }}"
+
+- name: Wait for health endpoint
+  ansible.builtin.uri:
+    url: "{{ continuum_healthcheck_url }}"
+    method: GET
+    status_code: 200
+    return_content: true
+  register: continuum_health
+  retries: "{{ continuum_healthcheck_retries }}"
+  delay: "{{ continuum_healthcheck_delay }}"
+  until: continuum_health.status == 200

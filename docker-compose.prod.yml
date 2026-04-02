@@ -1,0 +1,21 @@
+services:
+  continuum:
+    container_name: continuum-app
+    image: ${CONTINUUM_IMAGE:-continuum:latest}
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    ports:
+      - "${PROD_PORT:-3000}:3000"
+    volumes:
+      - continuum-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  continuum-data:
+    name: continuum-data

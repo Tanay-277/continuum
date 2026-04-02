@@ -10,6 +10,7 @@ import { CommandSearchTrigger } from '@/components/search-bar';
 import { SearchCommandPalette } from '@/components/search-command-palette';
 import { GameCard, GameCardSkeleton, type GameCardProps } from '@/components/game-card';
 import { CATEGORY_CONFIGS } from '@/lib/category-config';
+import type { Game } from '@/lib/types';
 
 type ShelfParams = {
   page_size?: number;
@@ -55,7 +56,7 @@ const CATEGORY_SHELVES: Array<{
   },
 ];
 
-function mapGameToCardProps(game: any): GameCardProps {
+function mapGameToCardProps(game: Game): GameCardProps {
   return {
     id: game.id,
     name: game.name,
@@ -63,8 +64,8 @@ function mapGameToCardProps(game: any): GameCardProps {
     rating: game.rating,
     ratingsCount: game.ratings_count,
     released: game.released,
-    platforms: game.platforms?.map((p: any) => p.platform?.name || p.platform) || [],
-    genres: game.genres?.map((g: any) => g.name) || [],
+    platforms: game.platforms?.map((platform) => platform.platform.name) || [],
+    genres: game.genres?.map((genre) => genre.name) || [],
     metacritic: game.metacritic,
     playtime: game.playtime,
   };
@@ -241,6 +242,7 @@ export default function HomePage() {
   }, [featuredGames, allGames, currentGames]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveSlide(0);
   }, [featuredGames.length]);
 
@@ -270,6 +272,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (page === 1) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAllGames(currentGames);
       return;
     }
