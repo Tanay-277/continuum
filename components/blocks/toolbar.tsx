@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 
 export default function Toolbar() {
-	const [cat, setCat] = useState<string|null>("Yearly");
+	const [cat, setCat] = useState<string | null>("Yearly");
 
 	return (
 		<div className="flex toolbar rounded-2xl w-full bg-accent-foreground/5 p-2 px-8 mb-4 font-mono justify-between items-center">

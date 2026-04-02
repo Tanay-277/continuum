@@ -1,9 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
-  experimental:{
-      outputFileTracingRoot: __dirname
-  }
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'media.rawg.io',
+        pathname: '/**',
+      },
+    ],
+  },
+  outputFileTracingRoot: __dirname,
 };
 
 module.exports = nextConfig;

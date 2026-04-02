@@ -46,9 +46,7 @@ export const rawgService = {
    * Fetch a single game by ID
    */
   getGameById: async (id: number): Promise<any> => {
-    const response = await rawgClient.get(
-      `/rawg?endpoint=${encodeURIComponent(`games/${id}`)}`
-    );
+    const response = await rawgClient.get(`/games/${id}`);
     return response.data;
   },
 
