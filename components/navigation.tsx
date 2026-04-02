@@ -16,6 +16,8 @@ const navItems = [
 	{ href: "/profile", label: "Profile", icon: User },
 ];
 
+const NAV_SHELL_CLASS = "mx-auto w-full max-w-340 px-4 sm:px-6 lg:px-8";
+
 export function Navigation() {
 	const pathname = usePathname();
 	const { status: sessionStatus } = useSession();
@@ -23,110 +25,136 @@ export function Navigation() {
 	const signInHref = `/auth/signin?callbackUrl=${encodeURIComponent(pathname || "/")}`;
 
 	const isActiveRoute = (href: string) => {
+		if (!pathname) {
+			return false;
+		}
+
 		if (href === "/") {
 			return pathname === "/" || pathname.startsWith("/games/");
 		}
-		if (href === "/categories") {
-			return pathname === "/categories" || pathname.startsWith("/categories/");
-		}
-		return pathname === href;
+
+		return pathname === href || pathname.startsWith(`${href}/`);
 	};
 
 	const handleSignOut = () => {
 		void signOut({ callbackUrl: "/" });
 	};
 
+	const getDesktopItemClasses = (isActive: boolean) =>
+		cn(
+			"h-8 rounded-full border border-transparent px-3.5 text-xs font-medium tracking-wide text-foreground/68 transition-colors",
+			isActive
+				? "border-white/20 bg-white/16 text-foreground"
+				: "hover:border-white/10 hover:bg-white/8 hover:text-foreground"
+		);
+
+	const getMobileItemClasses = (isActive: boolean) =>
+		cn(
+			"flex h-10 min-w-[4.75rem] shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border border-transparent px-2 text-[11px] leading-none text-foreground/72 transition-colors",
+			isActive
+				? "border-white/20 bg-white/16 text-foreground"
+				: "hover:border-white/10 hover:bg-white/8 hover:text-foreground"
+		);
+
 	return (
-		<nav className="sticky top-0 z-50 px-3 pt-3 sm:px-5 sm:pt-4">
-			<div className="apple-surface apple-card-shadow mx-auto flex h-16 max-w-340 items-center rounded-2xl px-3 sm:px-4">
-				<Link
-					href="/"
-					className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
-				>
-					<div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-b from-white/35 to-white/10 text-primary shadow-[inset_0_1px_0_oklch(0.96_0_0/0.4)]">
-						<Gamepad2 className="h-5 w-5" />
-					</div>
-					<div className="leading-tight">
-						<span className="apple-caption block text-[0.56rem]">
-							Continuum
-						</span>
-					</div>
-				</Link>
+		<nav className="sticky top-0 z-50 pt-4">
+			<div className={NAV_SHELL_CLASS}>
+				<div className="apple-surface w-full rounded-2xl border border-white/10">
+					<div className="grid h-14 grid-cols-[auto_1fr_auto] items-center gap-2 px-3 sm:px-4">
+						<Link
+							href="/"
+							className="flex items-center gap-2 transition-opacity hover:opacity-90"
+						>
+							<div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/16 bg-white/8 text-primary">
+								<Gamepad2 className="h-4.5 w-4.5" />
+							</div>
+							<span className="apple-caption text-[0.62rem] text-foreground/80">Continuum</span>
+						</Link>
 
-				<div className="mx-2 hidden min-w-0 flex-1 items-center justify-center md:flex">
-					<div className="flex items-center gap-1 rounded-full bg-black/20 p-1.5">
-						{navItems.map((item) => {
-							const Icon = item.icon;
-							const isActive = isActiveRoute(item.href);
+						<div className="hidden min-w-0 items-center justify-center md:flex" aria-label="Primary">
+							<div className="flex items-center gap-1 rounded-full border border-white/10 bg-black/14 p-1">
+								{navItems.map((item) => {
+									const isActive = isActiveRoute(item.href);
 
-							return (
-								<Link key={item.href} href={item.href}>
-									<Button
-										variant="ghost"
-										size="sm"
-										className={cn(
-											"h-9 gap-2 rounded-full px-4 text-xs font-medium tracking-wide text-foreground/70 transition-all",
-											isActive &&
-												"bg-white/14 text-foreground shadow-[inset_0_1px_0_oklch(0.98_0_0/0.35)]",
-										)}
-									>
-										<Icon className="h-3.5 w-3.5" />
-										{item.label}
-									</Button>
-								</Link>
-							);
-						})}
-					</div>
-				</div>
+									return (
+										<Link key={item.href} href={item.href}>
+											<Button
+												variant="ghost"
+												size="sm"
+												className={getDesktopItemClasses(isActive)}
+												aria-current={isActive ? "page" : undefined}
+											>
+												{item.label}
+											</Button>
+										</Link>
+									);
+								})}
+							</div>
+						</div>
 
-				<Link
-					href="/backlog"
-					className="ml-auto hidden h-9 items-center rounded-full border border-white/15 bg-white/10 px-4 text-xs font-medium tracking-wide text-foreground/90 transition-colors hover:bg-white/15 lg:inline-flex"
-				>
-					Library
-				</Link>
-
-				{isAuthenticated ? (
-					<Button
-						onClick={handleSignOut}
-						variant="outline"
-						size="sm"
-						className="ml-2 hidden rounded-full border-white/20 bg-white/8 px-4 text-xs lg:inline-flex"
-					>
-						<LogOut className="h-3.5 w-3.5" />
-						Sign Out
-					</Button>
-				) : (
-					<Link
-						href={signInHref}
-						className="ml-2 hidden h-9 items-center gap-1 rounded-full border border-white/15 bg-white/10 px-4 text-xs font-medium tracking-wide text-foreground/90 transition-colors hover:bg-white/15 lg:inline-flex"
-					>
-						<LogIn className="h-3.5 w-3.5" />
-						Sign In
-					</Link>
-				)}
-
-				<div className="ml-auto flex items-center gap-1 md:hidden">
-					{navItems.map((item) => {
-						const Icon = item.icon;
-						const isActive = isActiveRoute(item.href);
-
-						return (
-							<Link key={item.href} href={item.href}>
-								<Button
-									variant="ghost"
-									size="icon"
-									className={cn(
-										"h-9 w-9 rounded-full text-foreground/70",
-										isActive && "bg-white/14 text-foreground",
-									)}
-								>
-									<Icon className="h-4 w-4" />
-									<span className="sr-only">{item.label}</span>
-								</Button>
+						{isAuthenticated ? (
+							<Button
+								onClick={handleSignOut}
+								variant="outline"
+								size="sm"
+								className="hidden h-8 rounded-full border-white/20 bg-white/6 px-3 text-[11px] tracking-wide md:inline-flex"
+							>
+								<LogOut className="h-3.5 w-3.5" />
+								Sign Out
+							</Button>
+						) : (
+							<Link
+								href={signInHref}
+								className="hidden h-8 items-center gap-1 rounded-full border border-white/20 bg-white/8 px-3 text-[11px] font-medium tracking-wide text-foreground/90 transition-colors hover:bg-white/14 md:inline-flex"
+							>
+								<LogIn className="h-3.5 w-3.5" />
+								Sign In
 							</Link>
-						);
-					})}
+						)}
+
+						{isAuthenticated ? (
+							<Button
+								onClick={handleSignOut}
+								variant="outline"
+								size="sm"
+								className="h-8 w-8 rounded-full border-white/20 bg-white/6 p-0 md:hidden"
+							>
+								<LogOut className="h-3.5 w-3.5" />
+								<span className="sr-only">Sign Out</span>
+							</Button>
+						) : (
+							<Link
+								href={signInHref}
+								className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/8 text-foreground/90 transition-colors hover:bg-white/14 md:hidden"
+							>
+								<LogIn className="h-3.5 w-3.5" />
+								<span className="sr-only">Sign In</span>
+							</Link>
+						)}
+					</div>
+
+					<div className="border-t border-white/10 px-2 pb-2 pt-2 md:hidden">
+						<div className="thin-scrollbar flex gap-1 overflow-x-auto pb-0.5" aria-label="Primary">
+							{navItems.map((item) => {
+								const Icon = item.icon;
+								const isActive = isActiveRoute(item.href);
+
+								return (
+									<Link key={item.href} href={item.href}>
+										<Button
+											variant="ghost"
+											size="sm"
+											className={getMobileItemClasses(isActive)}
+											aria-current={isActive ? "page" : undefined}
+										>
+											<Icon className="h-3.5 w-3.5" />
+											{item.label}
+										</Button>
+									</Link>
+								);
+							})}
+						</div>
+					</div>
 				</div>
 			</div>
 		</nav>

@@ -173,8 +173,8 @@
   
   /* Custom scrollbar for dark theme */
   ::-webkit-scrollbar {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
   }
   
   ::-webkit-scrollbar-track {
@@ -215,15 +215,12 @@
   }
 
   .apple-card-shadow {
-    box-shadow:
-      0 30px 60px oklch(0.03 0 0 / 0.5),
-      inset 0 1px 0 oklch(0.96 0 0 / 0.08);
+    box-shadow: none;
   }
 
   .apple-focus-ring {
-    box-shadow:
-      0 0 0 1px oklch(0.83 0.03 236 / 0.58),
-      0 20px 38px oklch(0.02 0 0 / 0.5);
+    outline: 1px solid oklch(0.83 0.03 236 / 0.58);
+    outline-offset: 0;
   }
 
   .apple-title {
@@ -264,11 +261,12 @@
   .thin-scrollbar {
     scrollbar-width: thin;
     scrollbar-color: oklch(0.56 0.02 245 / 0.85) oklch(0.22 0.01 255 / 0.4);
+    scrollbar-gutter: stable;
   }
 
   .thin-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 8px;
   }
 
   .thin-scrollbar::-webkit-scrollbar-track {
@@ -279,6 +277,10 @@
   .thin-scrollbar::-webkit-scrollbar-thumb {
     background: oklch(0.58 0.02 244 / 0.8);
     border-radius: 999px;
+  }
+
+  .thin-scrollbar::-webkit-scrollbar-thumb:horizontal {
+    background: oklch(0.62 0.03 244 / 0.9);
   }
 
   .thin-scrollbar::-webkit-scrollbar-thumb:hover {

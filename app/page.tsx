@@ -18,6 +18,7 @@ type ShelfParams = {
 };
 
 const FEATURED_SECTION_ID = 'featured-grid';
+const HOME_SHELL_CLASS = 'mx-auto w-full max-w-340 px-4 sm:px-6 lg:px-8';
 
 const CATEGORY_SHELVES: Array<{
   id: string;
@@ -325,8 +326,8 @@ export default function HomePage() {
 
   return (
     <div className="pb-16">
-      <section className="px-4 pt-4 sm:px-6 lg:px-8">
-        <div className="apple-surface apple-card-shadow relative mx-auto max-w-350 overflow-hidden rounded-[34px] border border-white/15">
+      <section className={`${HOME_SHELL_CLASS} pt-4`}>
+        <div className="apple-surface apple-card-shadow relative w-full overflow-hidden rounded-[34px] border border-white/15">
           {activeFeaturedGame?.backgroundImage && (
             <Image
               key={activeFeaturedGame.id}
@@ -420,7 +421,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto mt-6 w-full max-w-350 px-4 sm:px-6 lg:px-8">
+      <section className={`${HOME_SHELL_CLASS} mt-6`}>
         <div className="apple-surface apple-card-shadow rounded-3xl border border-white/10 p-4 sm:p-5">
           <div className="mb-3 flex items-end justify-between gap-4">
             <div>
@@ -455,7 +456,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto mt-6 w-full max-w-350 px-4 sm:px-6 lg:px-8">
+      <section className={`${HOME_SHELL_CLASS} mt-6`}>
         <div className="thin-scrollbar flex gap-2 overflow-x-auto pb-1">
           {sectionLinks.map((item) => (
             <a
@@ -475,7 +476,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="catalogue" className="mx-auto mt-10 w-full max-w-350 px-4 sm:px-6 lg:px-8">
+      <section id="catalogue" className={`${HOME_SHELL_CLASS} mt-10`}>
         <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="apple-caption">Section Browser</p>
