@@ -15,6 +15,13 @@ interface SearchBarProps {
   className?: string;
 }
 
+interface CommandSearchTriggerProps {
+  onOpen: () => void;
+  placeholder?: string;
+  isLoading?: boolean;
+  className?: string;
+}
+
 export function SearchBar({
   onSearch,
   placeholder = 'Search games...',
@@ -138,9 +145,9 @@ export function GamingSearchBar({
 
   return (
     <div className={cn('relative w-full', className)}>
-      {/* Neon glow effect when focused */}
+      {/* Focus halo for cinematic search affordance */}
       {isFocused && (
-        <div className="absolute -inset-0.5 rounded-lg bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 blur-sm transition-opacity" />
+        <div className="absolute -inset-1 rounded-[1.35rem] bg-linear-to-r from-primary/25 via-primary/10 to-accent/25 blur-md" />
       )}
 
       <div className="relative">
@@ -166,13 +173,12 @@ export function GamingSearchBar({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           className={cn(
-            'h-14 pl-12 pr-12 text-base font-medium',
-            'glass-effect',
-            'border-border/50',
+            'h-14 rounded-2xl pl-12 pr-12 text-[15px] font-medium sm:text-base',
+            'glass-effect apple-card-shadow border-white/10',
             'transition-all duration-300',
-            'focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-0',
-            'placeholder:text-muted-foreground/70',
-            isFocused && 'neon-glow-cyan'
+            'focus-visible:border-primary/55 focus-visible:ring-0 focus-visible:ring-offset-0',
+            'placeholder:text-muted-foreground/75',
+            isFocused && 'apple-focus-ring'
           )}
         />
 
@@ -197,11 +203,39 @@ export function GamingSearchBar({
 
       {/* Search hint */}
       {isFocused && !query && (
-        <div className="absolute left-4 top-full mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="absolute left-4 top-full mt-2 flex items-center gap-2 text-xs text-muted-foreground/90">
           <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono">Esc</kbd>
           <span>to clear</span>
         </div>
       )}
     </div>
+  );
+}
+
+export function CommandSearchTrigger({
+  onOpen,
+  placeholder = 'Search games, genres, platforms...',
+  isLoading = false,
+  className,
+}: CommandSearchTriggerProps) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={cn(
+        'glass-effect apple-card-shadow flex h-14 w-full items-center rounded-2xl border border-white/10 px-4 text-left transition-all duration-300 hover:border-primary/40',
+        className
+      )}
+      aria-label="Open search command palette"
+    >
+      <span className="mr-3 text-muted-foreground">
+        {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
+      </span>
+      <span className="flex-1 text-sm text-muted-foreground/85 sm:text-base">{placeholder}</span>
+      <span className="ml-3 hidden items-center gap-1 rounded-md border border-white/15 bg-white/5 px-2 py-1 text-xs text-muted-foreground md:inline-flex">
+        Cmd/Ctrl
+        <span className="font-semibold text-foreground">K</span>
+      </span>
+    </button>
   );
 }

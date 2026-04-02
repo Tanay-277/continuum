@@ -85,60 +85,46 @@
 }
 
 .dark {
-  /* Gaming Dark Theme - Deep blacks with neon accents */
-  --background: oklch(0.08 0 0); /* Deeper black */
-  --foreground: oklch(0.98 0 0); /* Bright white text */
-  --card: oklch(0.12 0.01 270); /* Dark card with subtle purple tint */
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.10 0 0);
-  --popover-foreground: oklch(0.98 0 0);
-  
-  /* Neon Cyan Primary */
-  --primary: oklch(0.75 0.15 195); /* Cyan neon */
-  --primary-foreground: oklch(0.08 0 0);
-  
-  /* Purple Secondary */
-  --secondary: oklch(0.20 0.05 270); /* Dark purple */
-  --secondary-foreground: oklch(0.98 0 0);
-  
-  /* Muted states */
-  --muted: oklch(0.18 0.02 270);
-  --muted-foreground: oklch(0.60 0 0);
-  
-  /* Purple Accent */
-  --accent: oklch(0.65 0.18 285); /* Purple accent */
-  --accent-foreground: oklch(0.98 0 0);
-  
-  /* Neon Pink Destructive */
-  --destructive: oklch(0.65 0.25 350); /* Neon pink/red */
-  
-  /* Borders and inputs with subtle glow */
-  --border: oklch(0.25 0.05 270 / 30%);
-  --input: oklch(0.15 0.02 270);
-  --ring: oklch(0.75 0.15 195); /* Cyan glow for focus */
-  
-  /* Gaming color scheme */
-  --chart-1: oklch(0.75 0.15 195); /* Cyan */
-  --chart-2: oklch(0.65 0.18 285); /* Purple */
-  --chart-3: oklch(0.65 0.25 350); /* Pink */
-  --chart-4: oklch(0.70 0.15 140); /* Green */
-  --chart-5: oklch(0.75 0.18 60); /* Yellow */
-  
-  /* Sidebar gaming theme */
-  --sidebar: oklch(0.10 0.01 270);
-  --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.75 0.15 195);
-  --sidebar-primary-foreground: oklch(0.08 0 0);
-  --sidebar-accent: oklch(0.18 0.03 270);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.25 0.05 270 / 20%);
-  --sidebar-ring: oklch(0.75 0.15 195);
-  
-  /* Custom gaming colors */
-  --neon-cyan: oklch(0.75 0.15 195);
-  --neon-purple: oklch(0.65 0.18 285);
-  --neon-pink: oklch(0.65 0.25 350);
-  --neon-green: oklch(0.70 0.15 140);
+  --background: oklch(0.15 0.01 255);
+  --foreground: oklch(0.97 0.01 255);
+  --card: oklch(0.2 0.01 255);
+  --card-foreground: oklch(0.97 0.01 255);
+  --popover: oklch(0.18 0.01 255);
+  --popover-foreground: oklch(0.97 0.01 255);
+
+  --primary: oklch(0.81 0.04 238);
+  --primary-foreground: oklch(0.18 0.01 255);
+
+  --secondary: oklch(0.25 0.01 255);
+  --secondary-foreground: oklch(0.94 0.01 255);
+
+  --muted: oklch(0.23 0.01 255);
+  --muted-foreground: oklch(0.73 0.01 255);
+
+  --accent: oklch(0.72 0.03 210);
+  --accent-foreground: oklch(0.95 0.01 255);
+
+  --destructive: oklch(0.65 0.19 22);
+  --destructive-foreground: oklch(0.95 0.01 255);
+
+  --border: oklch(0.42 0.01 255 / 0.35);
+  --input: oklch(0.22 0.01 255 / 0.75);
+  --ring: oklch(0.81 0.04 238);
+
+  --chart-1: oklch(0.81 0.04 238);
+  --chart-2: oklch(0.73 0.03 210);
+  --chart-3: oklch(0.67 0.02 260);
+  --chart-4: oklch(0.61 0.02 280);
+  --chart-5: oklch(0.77 0.03 196);
+
+  --sidebar: oklch(0.17 0.01 255);
+  --sidebar-foreground: oklch(0.95 0.01 255);
+  --sidebar-primary: oklch(0.81 0.04 238);
+  --sidebar-primary-foreground: oklch(0.18 0.01 255);
+  --sidebar-accent: oklch(0.23 0.01 255);
+  --sidebar-accent-foreground: oklch(0.95 0.01 255);
+  --sidebar-border: oklch(0.4 0.01 255 / 0.25);
+  --sidebar-ring: oklch(0.81 0.04 238);
 }
 
 @layer base {
@@ -146,7 +132,12 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply text-foreground font-sans antialiased;
+    background:
+      radial-gradient(circle at 18% 12%, oklch(0.38 0.03 232 / 0.22), transparent 38%),
+      radial-gradient(circle at 84% 0%, oklch(0.33 0.02 262 / 0.22), transparent 40%),
+      linear-gradient(180deg, oklch(0.17 0.01 255) 0%, oklch(0.14 0.01 255) 100%);
+    min-height: 100vh;
   }
   
   /* Lenis smooth scroll setup */
@@ -171,60 +162,126 @@
     pointer-events: none;
   }
   
-  /* Gaming aesthetic enhancements */
+  main {
+    position: relative;
+    isolation: isolate;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold tracking-tight;
   }
   
   /* Custom scrollbar for dark theme */
   ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 7px;
+    height: 7px;
   }
   
   ::-webkit-scrollbar-track {
-    background: oklch(0.12 0.01 270);
+    background: oklch(0.22 0.01 255 / 0.75);
   }
   
   ::-webkit-scrollbar-thumb {
-    background: oklch(0.30 0.08 270);
-    border-radius: 5px;
+    background: oklch(0.53 0.02 245 / 0.9);
+    border-radius: 999px;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.75 0.15 195);
+    background: oklch(0.7 0.03 236);
   }
 }
 
-/* Utility classes for gaming effects */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @layer utilities {
-  .neon-glow-cyan {
-    box-shadow: 0 0 10px oklch(0.75 0.15 195 / 0.5), 
-                0 0 20px oklch(0.75 0.15 195 / 0.3),
-                0 0 30px oklch(0.75 0.15 195 / 0.1);
+  .apple-surface {
+    background: linear-gradient(
+      140deg,
+      oklch(0.24 0.01 255 / 0.88) 0%,
+      oklch(0.2 0.01 255 / 0.82) 45%,
+      oklch(0.17 0.01 255 / 0.88) 100%
+    );
+    border: 1px solid oklch(0.65 0.01 255 / 0.22);
+    backdrop-filter: blur(24px) saturate(135%);
   }
-  
-  .neon-glow-purple {
-    box-shadow: 0 0 10px oklch(0.65 0.18 285 / 0.5), 
-                0 0 20px oklch(0.65 0.18 285 / 0.3),
-                0 0 30px oklch(0.65 0.18 285 / 0.1);
+
+  .apple-card-shadow {
+    box-shadow:
+      0 30px 60px oklch(0.03 0 0 / 0.5),
+      inset 0 1px 0 oklch(0.96 0 0 / 0.08);
   }
-  
-  .neon-glow-pink {
-    box-shadow: 0 0 10px oklch(0.65 0.25 350 / 0.5), 
-                0 0 20px oklch(0.65 0.25 350 / 0.3),
-                0 0 30px oklch(0.65 0.25 350 / 0.1);
+
+  .apple-focus-ring {
+    box-shadow:
+      0 0 0 1px oklch(0.83 0.03 236 / 0.58),
+      0 20px 38px oklch(0.02 0 0 / 0.5);
+  }
+
+  .apple-title {
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+
+  .apple-caption {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: oklch(0.79 0.01 255 / 0.82);
+  }
+
+  .reveal-up {
+    animation: reveal-up 650ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }
   
   .glass-effect {
-    background: oklch(0.15 0.02 270 / 0.8);
-    backdrop-filter: blur(12px);
-    border: 1px solid oklch(0.25 0.05 270 / 0.3);
+    background: linear-gradient(
+      140deg,
+      oklch(0.23 0.01 255 / 0.86) 0%,
+      oklch(0.19 0.01 255 / 0.8) 100%
+    );
+    border: 1px solid oklch(0.7 0.01 255 / 0.2);
+    backdrop-filter: blur(22px) saturate(125%);
   }
-  
-  .gradient-gaming {
-    background: linear-gradient(135deg, 
-      oklch(0.75 0.15 195 / 0.1) 0%, 
-      oklch(0.65 0.18 285 / 0.1) 100%);
+
+  .hover-lift {
+    transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-6px);
+  }
+
+  .thin-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.56 0.02 245 / 0.85) oklch(0.22 0.01 255 / 0.4);
+  }
+
+  .thin-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .thin-scrollbar::-webkit-scrollbar-track {
+    background: oklch(0.2 0.01 255 / 0.4);
+    border-radius: 999px;
+  }
+
+  .thin-scrollbar::-webkit-scrollbar-thumb {
+    background: oklch(0.58 0.02 244 / 0.8);
+    border-radius: 999px;
+  }
+
+  .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.7 0.03 236);
   }
 }

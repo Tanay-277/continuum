@@ -62,8 +62,8 @@ export function GameGrid({
   // Error state
   if (error && games.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <Alert variant="destructive" className="max-w-md">
+      <div className="flex flex-col items-center justify-center py-14">
+        <Alert variant="destructive" className="apple-surface max-w-xl border border-white/20 bg-destructive/20 text-destructive-foreground">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex flex-col gap-3">
             <span>{error}</span>
@@ -86,41 +86,43 @@ export function GameGrid({
   // Empty state
   if (!isLoading && games.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="mb-4 text-6xl opacity-50">🎮</div>
-        <h3 className="mb-2 text-xl font-bold">No Games Found</h3>
-        <p className="text-muted-foreground">{emptyMessage}</p>
+      <div className="apple-surface flex flex-col items-center justify-center rounded-3xl border border-white/10 px-6 py-18 text-center">
+        <div className="mb-4 text-5xl opacity-70">🎮</div>
+        <h3 className="apple-title mb-2 text-2xl font-semibold">No Games Found</h3>
+        <p className="max-w-md text-muted-foreground">{emptyMessage}</p>
       </div>
     );
   }
 
   return (
     <div className={cn('space-y-8', className)}>
-      {/* Game Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {games.map((game) => (
-          <GameCard key={game.id} {...game} />
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        {games.map((game, index) => (
+          <div
+            key={game.id}
+            className="reveal-up h-full"
+            style={{ animationDelay: `${Math.min(index, 12) * 45}ms` }}
+          >
+            <GameCard {...game} className="h-full" />
+          </div>
         ))}
 
-        {/* Loading skeletons */}
         {isLoading &&
-          Array.from({ length: 8 }).map((_, index) => (
+          Array.from({ length: 6 }).map((_, index) => (
             <GameCardSkeleton key={`skeleton-${index}`} />
           ))}
       </div>
 
-      {/* Infinite scroll trigger */}
       {hasMore && !error && (
         <div ref={observerTarget} className="flex justify-center py-8">
-          <div className="text-center text-sm text-muted-foreground">
+          <div className="apple-surface rounded-full px-4 py-2 text-center text-sm text-muted-foreground">
             {isLoading ? 'Loading more games...' : 'Scroll for more'}
           </div>
         </div>
       )}
 
-      {/* Error during pagination */}
       {error && games.length > 0 && (
-        <Alert variant="destructive" className="mx-auto max-w-md">
+        <Alert variant="destructive" className="apple-surface mx-auto max-w-md border border-white/20 bg-destructive/20">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex flex-col gap-3">
             <span>{error}</span>
