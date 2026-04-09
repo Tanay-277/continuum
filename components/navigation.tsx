@@ -75,7 +75,6 @@ export function Navigation() {
 							<div className="flex items-center gap-1 rounded-full border border-white/10 bg-black/14 p-1">
 								{navItems.map((item) => {
 									const isActive = isActiveRoute(item.href);
-
 									return (
 										<Link key={item.href} href={item.href}>
 											<Button
