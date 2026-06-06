@@ -22,3 +22,5 @@ pnpm-debug.log*
 # Ansible local secret helpers
 ansible/.vault_pass.txt
 ansible/*.retry
+
+*.docx
