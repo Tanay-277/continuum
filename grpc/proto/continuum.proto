@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package continuum;
+
+service GameService {
+  rpc GetGameStatus(GameRequest) returns (GameResponse);
+}
+
+message GameRequest {
+  string game_name = 1;
+}
+
+message GameResponse {
+  string status = 1;
+}
