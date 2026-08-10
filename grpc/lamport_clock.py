@@ -1,6 +1,7 @@
 class LamportClock:
-    def __init__(self):
+    def __init__(self, node_id="unknown"):
         self.counter = 0
+        self.node_id = node_id
 
     def tick(self):
         self.counter += 1
@@ -12,3 +13,6 @@ class LamportClock:
 
     def get_time(self):
         return self.counter
+
+    def __str__(self):
+        return f"[{self.node_id}] Lamport Clock = {self.counter}"
