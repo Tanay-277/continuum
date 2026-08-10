@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0f\x63ontinuum.proto\x12\tcontinuum\" \n\x0bGameRequest\x12\x11\n\tgame_name\x18\x01 \x01(\t\"\x1e\n\x0cGameResponse\x12\x0e\n\x06status\x18\x01 \x01(\t2O\n\x0bGameService\x12@\n\rGetGameStatus\x12\x16.continuum.GameRequest\x1a\x17.continuum.GameResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0f\x63ontinuum.proto\x12\tcontinuum\";\n\x0bGameRequest\x12\x11\n\tgame_name\x18\x01 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x02 \x01(\x03\"9\n\x0cGameResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x02 \x01(\x03\x32O\n\x0bGameService\x12@\n\rGetGameStatus\x12\x16.continuum.GameRequest\x1a\x17.continuum.GameResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,9 +32,9 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'continuum_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
   _globals['_GAMEREQUEST']._serialized_start=30
-  _globals['_GAMEREQUEST']._serialized_end=62
-  _globals['_GAMERESPONSE']._serialized_start=64
-  _globals['_GAMERESPONSE']._serialized_end=94
-  _globals['_GAMESERVICE']._serialized_start=96
-  _globals['_GAMESERVICE']._serialized_end=175
+  _globals['_GAMEREQUEST']._serialized_end=89
+  _globals['_GAMERESPONSE']._serialized_start=91
+  _globals['_GAMERESPONSE']._serialized_end=148
+  _globals['_GAMESERVICE']._serialized_start=150
+  _globals['_GAMESERVICE']._serialized_end=229
 # @@protoc_insertion_point(module_scope)

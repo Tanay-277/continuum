@@ -8,15 +8,24 @@ sys.path.append(os.path.dirname(__file__))
 import grpc
 import continuum_pb2
 import continuum_pb2_grpc
+from lamport_clock import LamportClock
 
 
 class GameService(continuum_pb2_grpc.GameServiceServicer):
+
+    def __init__(self):
+        self.lamport_clock = LamportClock()
 
     def GetGameStatus(self, request, context):
 
         print("\n======================================")
         print("Step 1 : Request received from Client")
         print(f"Requested Game : {request.game_name}")
+        print(f"Received Lamport Timestamp : {request.lamport_timestamp}")
+
+        self.lamport_clock.update(request.lamport_timestamp)
+
+        print(f"Server Lamport Clock (after update) : {self.lamport_clock.get_time()}")
 
         time.sleep(1)
 
@@ -31,11 +40,17 @@ class GameService(continuum_pb2_grpc.GameServiceServicer):
 
         status = f"{request.game_name} is currently in your Playing Library."
 
+        lamport_timestamp = self.lamport_clock.tick()
+
         print("Response Ready")
+        print(f"Server Lamport Timestamp (response) : {lamport_timestamp}")
         print("Sending Response to Client...")
         print("======================================\n")
 
-        return continuum_pb2.GameResponse(status=status)
+        return continuum_pb2.GameResponse(
+            status=status,
+            lamport_timestamp=lamport_timestamp
+        )
 
 
 def serve():
