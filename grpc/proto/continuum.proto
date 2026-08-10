@@ -8,8 +8,10 @@ service GameService {
 
 message GameRequest {
   string game_name = 1;
+  int64 lamport_timestamp = 2;
 }
 
 message GameResponse {
   string status = 1;
+  int64 lamport_timestamp = 2;
 }
