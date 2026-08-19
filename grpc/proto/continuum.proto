@@ -15,3 +15,36 @@ message GameResponse {
   string status = 1;
   int64 lamport_timestamp = 2;
 }
+
+// Experiment 4: Mutual Exclusion Service (Ricart-Agrawala Algorithm)
+service MutexService {
+  rpc RequestAccess(MutexRequest) returns (MutexResponse);
+}
+
+message MutexRequest {
+  int32 node_id = 1;
+  int64 lamport_timestamp = 2;
+}
+
+message MutexResponse {
+  int32 node_id = 1;
+  int64 lamport_timestamp = 2;
+  bool granted = 3;
+}
+
+// --- Experiment 5: Deadlock simulation & resolution ---
+service LockService {
+  rpc AcquireLock (LockRequest) returns (LockReply);
+  rpc ReleaseLock (LockRequest) returns (LockReply);
+}
+
+message LockRequest {
+  string resource_id = 1;
+  int32 holder_id = 2;
+  int32 timestamp = 3;
+}
+
+message LockReply {
+  bool granted = 1;
+  string message = 2;
+}

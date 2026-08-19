@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0f\x63ontinuum.proto\x12\tcontinuum\";\n\x0bGameRequest\x12\x11\n\tgame_name\x18\x01 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x02 \x01(\x03\"9\n\x0cGameResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x02 \x01(\x03\x32O\n\x0bGameService\x12@\n\rGetGameStatus\x12\x16.continuum.GameRequest\x1a\x17.continuum.GameResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0f\x63ontinuum.proto\x12\tcontinuum\";\n\x0bGameRequest\x12\x11\n\tgame_name\x18\x01 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x02 \x01(\x03\"9\n\x0cGameResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x02 \x01(\x03\":\n\x0cMutexRequest\x12\x0f\n\x07node_id\x18\x01 \x01(\x05\x12\x19\n\x11lamport_timestamp\x18\x02 \x01(\x03\"L\n\rMutexResponse\x12\x0f\n\x07node_id\x18\x01 \x01(\x05\x12\x19\n\x11lamport_timestamp\x18\x02 \x01(\x03\x12\x0f\n\x07granted\x18\x03 \x01(\x08\"H\n\x0bLockRequest\x12\x13\n\x0bresource_id\x18\x01 \x01(\t\x12\x11\n\tholder_id\x18\x02 \x01(\x05\x12\x11\n\ttimestamp\x18\x03 \x01(\x05\"-\n\tLockReply\x12\x0f\n\x07granted\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t2O\n\x0bGameService\x12@\n\rGetGameStatus\x12\x16.continuum.GameRequest\x1a\x17.continuum.GameResponse2R\n\x0cMutexService\x12\x42\n\rRequestAccess\x12\x17.continuum.MutexRequest\x1a\x18.continuum.MutexResponse2\x87\x01\n\x0bLockService\x12;\n\x0b\x41\x63quireLock\x12\x16.continuum.LockRequest\x1a\x14.continuum.LockReply\x12;\n\x0bReleaseLock\x12\x16.continuum.LockRequest\x1a\x14.continuum.LockReplyb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -35,6 +35,18 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_GAMEREQUEST']._serialized_end=89
   _globals['_GAMERESPONSE']._serialized_start=91
   _globals['_GAMERESPONSE']._serialized_end=148
-  _globals['_GAMESERVICE']._serialized_start=150
-  _globals['_GAMESERVICE']._serialized_end=229
+  _globals['_MUTEXREQUEST']._serialized_start=150
+  _globals['_MUTEXREQUEST']._serialized_end=208
+  _globals['_MUTEXRESPONSE']._serialized_start=210
+  _globals['_MUTEXRESPONSE']._serialized_end=286
+  _globals['_LOCKREQUEST']._serialized_start=288
+  _globals['_LOCKREQUEST']._serialized_end=360
+  _globals['_LOCKREPLY']._serialized_start=362
+  _globals['_LOCKREPLY']._serialized_end=407
+  _globals['_GAMESERVICE']._serialized_start=409
+  _globals['_GAMESERVICE']._serialized_end=488
+  _globals['_MUTEXSERVICE']._serialized_start=490
+  _globals['_MUTEXSERVICE']._serialized_end=572
+  _globals['_LOCKSERVICE']._serialized_start=575
+  _globals['_LOCKSERVICE']._serialized_end=710
 # @@protoc_insertion_point(module_scope)

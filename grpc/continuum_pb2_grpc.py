@@ -95,3 +95,196 @@ class GameService:
             timeout,
             metadata,
             _registered_method=True)
+
+
+class MutexServiceStub:
+    """Experiment 4: Mutual Exclusion Service (Ricart-Agrawala Algorithm)
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.RequestAccess = channel.unary_unary(
+                '/continuum.MutexService/RequestAccess',
+                request_serializer=continuum__pb2.MutexRequest.SerializeToString,
+                response_deserializer=continuum__pb2.MutexResponse.FromString,
+                _registered_method=True)
+
+
+class MutexServiceServicer:
+    """Experiment 4: Mutual Exclusion Service (Ricart-Agrawala Algorithm)
+    """
+
+    def RequestAccess(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_MutexServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'RequestAccess': grpc.unary_unary_rpc_method_handler(
+                    servicer.RequestAccess,
+                    request_deserializer=continuum__pb2.MutexRequest.FromString,
+                    response_serializer=continuum__pb2.MutexResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'continuum.MutexService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('continuum.MutexService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class MutexService:
+    """Experiment 4: Mutual Exclusion Service (Ricart-Agrawala Algorithm)
+    """
+
+    @staticmethod
+    def RequestAccess(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/continuum.MutexService/RequestAccess',
+            continuum__pb2.MutexRequest.SerializeToString,
+            continuum__pb2.MutexResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class LockServiceStub:
+    """--- Experiment 5: Deadlock simulation & resolution ---
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.AcquireLock = channel.unary_unary(
+                '/continuum.LockService/AcquireLock',
+                request_serializer=continuum__pb2.LockRequest.SerializeToString,
+                response_deserializer=continuum__pb2.LockReply.FromString,
+                _registered_method=True)
+        self.ReleaseLock = channel.unary_unary(
+                '/continuum.LockService/ReleaseLock',
+                request_serializer=continuum__pb2.LockRequest.SerializeToString,
+                response_deserializer=continuum__pb2.LockReply.FromString,
+                _registered_method=True)
+
+
+class LockServiceServicer:
+    """--- Experiment 5: Deadlock simulation & resolution ---
+    """
+
+    def AcquireLock(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ReleaseLock(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_LockServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'AcquireLock': grpc.unary_unary_rpc_method_handler(
+                    servicer.AcquireLock,
+                    request_deserializer=continuum__pb2.LockRequest.FromString,
+                    response_serializer=continuum__pb2.LockReply.SerializeToString,
+            ),
+            'ReleaseLock': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReleaseLock,
+                    request_deserializer=continuum__pb2.LockRequest.FromString,
+                    response_serializer=continuum__pb2.LockReply.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'continuum.LockService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('continuum.LockService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class LockService:
+    """--- Experiment 5: Deadlock simulation & resolution ---
+    """
+
+    @staticmethod
+    def AcquireLock(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/continuum.LockService/AcquireLock',
+            continuum__pb2.LockRequest.SerializeToString,
+            continuum__pb2.LockReply.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ReleaseLock(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/continuum.LockService/ReleaseLock',
+            continuum__pb2.LockRequest.SerializeToString,
+            continuum__pb2.LockReply.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
