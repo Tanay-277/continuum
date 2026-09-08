@@ -5,7 +5,7 @@ import warnings
 
 import continuum_pb2 as continuum__pb2
 
-GRPC_GENERATED_VERSION = '1.83.0'
+GRPC_GENERATED_VERSION = '1.83.1'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -279,6 +279,251 @@ class LockService:
             '/continuum.LockService/ReleaseLock',
             continuum__pb2.LockRequest.SerializeToString,
             continuum__pb2.LockReply.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class WorkerServiceStub:
+    """--- Experiment 6: Load Balancing (Least Connections) ---
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.HandleRequest = channel.unary_unary(
+                '/continuum.WorkerService/HandleRequest',
+                request_serializer=continuum__pb2.WorkRequest.SerializeToString,
+                response_deserializer=continuum__pb2.WorkReply.FromString,
+                _registered_method=True)
+
+
+class WorkerServiceServicer:
+    """--- Experiment 6: Load Balancing (Least Connections) ---
+    """
+
+    def HandleRequest(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_WorkerServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'HandleRequest': grpc.unary_unary_rpc_method_handler(
+                    servicer.HandleRequest,
+                    request_deserializer=continuum__pb2.WorkRequest.FromString,
+                    response_serializer=continuum__pb2.WorkReply.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'continuum.WorkerService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('continuum.WorkerService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class WorkerService:
+    """--- Experiment 6: Load Balancing (Least Connections) ---
+    """
+
+    @staticmethod
+    def HandleRequest(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/continuum.WorkerService/HandleRequest',
+            continuum__pb2.WorkRequest.SerializeToString,
+            continuum__pb2.WorkReply.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class ReplicaServiceStub:
+    """--- Experiment 7: Eventual Consistency via Gossip Replication + Last-Write-Wins ---
+    Replicated key-value style store. Each replica exposes the same
+    three RPCs to clients AND to its peer replicas.
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.SaveValue = channel.unary_unary(
+                '/continuum.ReplicaService/SaveValue',
+                request_serializer=continuum__pb2.ValueUpdate.SerializeToString,
+                response_deserializer=continuum__pb2.SaveAck.FromString,
+                _registered_method=True)
+        self.SyncUpdate = channel.unary_unary(
+                '/continuum.ReplicaService/SyncUpdate',
+                request_serializer=continuum__pb2.ValueUpdate.SerializeToString,
+                response_deserializer=continuum__pb2.SaveAck.FromString,
+                _registered_method=True)
+        self.GetValue = channel.unary_unary(
+                '/continuum.ReplicaService/GetValue',
+                request_serializer=continuum__pb2.ValueQuery.SerializeToString,
+                response_deserializer=continuum__pb2.ValueState.FromString,
+                _registered_method=True)
+
+
+class ReplicaServiceServicer:
+    """--- Experiment 7: Eventual Consistency via Gossip Replication + Last-Write-Wins ---
+    Replicated key-value style store. Each replica exposes the same
+    three RPCs to clients AND to its peer replicas.
+    """
+
+    def SaveValue(self, request, context):
+        """client -> replica (local write)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SyncUpdate(self, request, context):
+        """replica -> replica (gossip)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetValue(self, request, context):
+        """read current state
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_ReplicaServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'SaveValue': grpc.unary_unary_rpc_method_handler(
+                    servicer.SaveValue,
+                    request_deserializer=continuum__pb2.ValueUpdate.FromString,
+                    response_serializer=continuum__pb2.SaveAck.SerializeToString,
+            ),
+            'SyncUpdate': grpc.unary_unary_rpc_method_handler(
+                    servicer.SyncUpdate,
+                    request_deserializer=continuum__pb2.ValueUpdate.FromString,
+                    response_serializer=continuum__pb2.SaveAck.SerializeToString,
+            ),
+            'GetValue': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetValue,
+                    request_deserializer=continuum__pb2.ValueQuery.FromString,
+                    response_serializer=continuum__pb2.ValueState.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'continuum.ReplicaService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('continuum.ReplicaService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class ReplicaService:
+    """--- Experiment 7: Eventual Consistency via Gossip Replication + Last-Write-Wins ---
+    Replicated key-value style store. Each replica exposes the same
+    three RPCs to clients AND to its peer replicas.
+    """
+
+    @staticmethod
+    def SaveValue(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/continuum.ReplicaService/SaveValue',
+            continuum__pb2.ValueUpdate.SerializeToString,
+            continuum__pb2.SaveAck.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SyncUpdate(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/continuum.ReplicaService/SyncUpdate',
+            continuum__pb2.ValueUpdate.SerializeToString,
+            continuum__pb2.SaveAck.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetValue(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/continuum.ReplicaService/GetValue',
+            continuum__pb2.ValueQuery.SerializeToString,
+            continuum__pb2.ValueState.FromString,
             options,
             channel_credentials,
             insecure,
